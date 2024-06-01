@@ -31,8 +31,14 @@ int main(){
     while(1){
         al_wait_for_event(queue, &event);
 
-        if(event.type == 42)
+        if(event.type == 10 || event.type == 12){
+            if(event.keyboard.keycode == 1){
+
+            }
+        }
+        if(event.type == 42)//Botao 'X' da Janela
             break;
+        if(event.type == 30) //Novo Frame
     }
 
     al_destroy_timer(timer);
