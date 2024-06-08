@@ -1,33 +1,35 @@
 #include "street.h"
+#include <stdbool.h>
+#include <time.h>
 
+/*
+KEYBINDS* createKeys(){
+    KEYBINDS* key = NULL;
 
-JOYSTICK* createJoystick(){
-    JOYSTICK* stick = NULL;
-
-    stick = (JOYSTICK*)malloc(sizeof(JOYSTICK));
-    if(!stick)
+    key = (KEYBINDS*)malloc(sizeof(KEYBINDS));
+    if(!key)
         return NULL;
-    stick->up = false;
-    stick->down = false;
-    stick->left = false;
-    stick->right = false;
+    key->kick = false;
+    key->punch = false;
+    key->special = false;
 
-    return stick;
+    return key;
 }
+*/
 
-bool inRangeX(PLAYER* player1, PLAYER* player2){
-    if(player1->x <= player2->x + (player2->length / 2) && player1->x >= player2->x - (player2->length / 2))
+bool inRangeX(float x, PLAYER* player2){
+    if(x <= player2->x + (player2->length / 2) && x >= player2->x - (player2->length / 2))
         return true;
     return false;
 }
 
-bool inRangeY(PLAYER* player1, PLAYER* player2){
-    if(player1->y <= player2->y + (player2->height / 2) && player1->y >= player2->y - (player2->height / 2))
+bool inRangeY(float y, PLAYER* player2){
+    if(y <= player2->y + (player2->height / 2) && y >= player2->y - (player2->height / 2))
         return true;
     return false;
 }
 
-void move_up(PLAYER* player){
+void moveUp(PLAYER* player){
 
     player->stick->up = !player->stick->up;
 
@@ -49,7 +51,7 @@ void move_up(PLAYER* player){
     return;
 }
 
-void move_down(PLAYER* player){
+void moveDown(PLAYER* player, PLAYER* player2){
 
     player->stick->down = !player->stick->down;
 
@@ -60,49 +62,93 @@ void move_down(PLAYER* player){
             player->directionX = none;
         }
     }
-    else if(!player->stick->down && player->state == crouch)
+    else if(!player->stick->down && player->state == crouch){
+        if(player->stick->left){
+            if(AT_LEFT(player, player2))
+                player->state = walkB;
+            else
+                player->state = walkF;
+            player->directionX = left;
+            return;
+        }
+        if(player->stick->right){
+            if(AT_RIGHT(player, player2))
+                player->state = walkB;
+            else
+                player->state = walkF;
+            player->directionX = right;
+            return;
+        }
         player->state = stand;
+
+    }
 
     return;
 }
 
-void move_left(PLAYER* player1, PLAYER* player2){
+void moveLeft(PLAYER* player1, PLAYER* player2){
 
     player1->stick->left = !player1->stick->left;
 
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->left && player1->state == stand){
-        if(BACK_MOV_LEFT(player1->x, player2->x))
+        if(AT_LEFT(player1->x, player2->x))
             player1->state = walkB;
         else
             player1->state = walkF;
         player1->directionX = left;
+    }
+    //se pressionar enquanto anda na outra direcao
+    else if(player1->stick->left && player1->directionX == right && (player1->state == walkB || player1->state == walkF)){
+        player1->state = stand;
+        player1->directionX = none;
     }
     //Se soltar e estar andando para esquerda para de andar
     else if(!player1->stick->left && (player1->state == walkB || player1->state == walkF) && !player1->stick->right){
         player1->state = stand;
         player1->directionX = none;
     }
+    //se tiver as duas direcoes apertadas e soltar uma
+    else if(player1->stick->right && player1->directionY == none){
+        player1->directionX = right;
+        if(AT_RIGHT(player1, player2))
+            player1->state = walkB;
+        else
+            player1->state = walkF;
+    }
 
     return;
 }
 
-void move_right(PLAYER* player1, PLAYER* player2){
+void moveRight(PLAYER* player1, PLAYER* player2){
 
     player1->stick->right = !player1->stick->right;
 
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->right && player1->state == stand){
-        if(BACK_MOV_RIGHT(player1->x, player2->x))
+        if(AT_RIGHT(player1->x, player2->x))
             player1->state = walkB;
         else
             player1->state = walkF;
         player1->directionX = right;
     }
-     //Se soltar e estar andando para esquerda para de andar
-    if(!player1->stick->right && (player1->state == walkB || player1->state == walkF) && !player1->stick->left){
+    //Se pressionar enquanto anda na outra direcao
+    else if(player1->stick->right && player1->directionX == left && (player1->state == walkB || player1->state == walkF)){
         player1->state = stand;
         player1->directionX = none;
+    }
+     //Se soltar e estar andando para esquerda para de andar
+    else if(!player1->stick->right && (player1->state == walkB || player1->state == walkF) && !player1->stick->left){
+        player1->state = stand;
+        player1->directionX = none;
+    }
+        //se tiver as duas direcoes apertadas e soltar uma
+    else if(player1->stick->left && player1->directionY == none){
+        player1->directionX = left;
+        if(AT_LEFT(player1, player2))
+            player1->state = walkB;
+        else
+            player1->state = walkF;
     }
 
     return;
@@ -111,11 +157,11 @@ void move_right(PLAYER* player1, PLAYER* player2){
 //Calcula se movimento é valido no eixo Y
 bool isMovementValidUp(PLAYER* player1, PLAYER* player2){
     //Se tiver movimento para cima
-    if(player1->y + (player1->height / 2) + player1->speedY > MAX_Y)
+    if(player1->y - (player1->height / 2) - player1->speedY < 0)
         return false;
     //Se estiver em baixo do outro player
-    if(player1->y < player2->y && inRangeX(player1, player2))
-        if(player1->y + (player1->height / 2) + player1->speedY > (player2->y - player2->height / 2))
+    if(player1->y > player2->y && inRangeX(player1->x, player2))
+        if(player1->y - (player1->height / 2) - player1->speedY < (player2->y + player2->height / 2))
             return false;
     return true;
 }
@@ -123,11 +169,11 @@ bool isMovementValidUp(PLAYER* player1, PLAYER* player2){
 //Calcula se movimento é valido no eixo Y
 bool isMovementValidDown(PLAYER* player1, PLAYER* player2){
 
-    if((player1->y - (player1->height / 2) - player1->speedY) < GROUND_LEVEL)
+    if((player1->y + (player1->height / 2) + player1->speedY) > GROUND_LEVEL)
         return false;
     //Se tiver encima do outro player
-    if(player1->y > player2->y && inRangeX(player1, player2))
-        if(player1->y - (player1->height / 2) - player1->speedY < (player2->y + player2->height / 2))
+    if(player1->y < player2->y && inRangeX(player1->x, player2))
+        if(player1->y + (player1->height / 2) + player1->speedY > (player2->y - player2->height / 2))
             return false;
     return true;
 }
@@ -136,7 +182,7 @@ bool isMovementValidDown(PLAYER* player1, PLAYER* player2){
 bool isMovementValidLeft(PLAYER* player1, PLAYER* player2){
 
     //Se tiver movimento para cima
-    if(player1->directionY == up ){
+    /*if(player1->directionY == up ){
         if(!isMovementValidUp(player1, player2))
             return false;
     }
@@ -144,11 +190,11 @@ bool isMovementValidLeft(PLAYER* player1, PLAYER* player2){
     else if(player1->directionY == down)
         if(!isMovementValidDown(player1, player2))
             return false;
-
+    */
     if(player1->x - (player1->length / 2) - player1->speedX < 0)
         return false;
     //Se estiver na direita e no intervalo da altura do outro player
-    if(player1->x > player2->x && inRangeY(player1, player2)){
+    if(player1->x > player2->x && inRangeY(player1->y, player2)){
         if(player1->x - (player1->length / 2) - player1->speedX < player2->x + player2->length / 2)
             return false;
     }
@@ -156,7 +202,7 @@ bool isMovementValidLeft(PLAYER* player1, PLAYER* player2){
 }
 
 bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
-
+    /*
     //Se tiver movimento para cima
     if(player1->directionY == up){
         if(!isMovementValidUp(player1, player2))
@@ -166,14 +212,100 @@ bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
     else if(player1->directionY == down)
         if(!isMovementValidDown(player1,player2))
             return false;
-
+    */
     if(player1->x + (player1->length / 2) + player1->speedX > MAX_X)
         return false;
     //Se outro player estar na esquerda e no intervalo da altura do outro player
-    if(player1->x < player2->x && inRangeY(player1, player2)){
+    if(player1->x < player2->x && inRangeY(player1->y, player2)){
         if(player1->x + (player1->length / 2) + player1->speedX > player2->x - player2->length / 2)
             return false;
     }
     return true;
 }
 
+//Aplica dano dependendo de oque fex o hit
+void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* killer, PLAYER* victim){
+    if(projectile){
+        victim -= projectile->dmg;
+        destroyProjectile(&killer->projs, projectile);
+    }
+    else if(attack){}
+    return;
+}
+
+//Move projetil
+void moveProjectile(PLAYER* player1, PLAYER* player2){
+    PROJECTILE* aux = player1->projs;
+    if(aux){
+        while(aux){
+            if(aux->x < 0 || aux->x > MAX_X)//Miss
+                destroyProjectile(&player1->projs, aux);
+            else if(player2->projs){//Checa se acerta outros projeteis
+                if(aux->x <= player2->projs->x + player2->projs->side / 2 && aux->x >= player2->projs->x - player2->projs->side / 2){//Hit projetil
+                    destroyProjectile(&player1->projs, aux);
+                    destroyProjectile(&player2->projs, player2->projs);
+                }
+            }
+            else if(inRangeX(aux->x, player2) && inRangeY(aux->y, player2)) //Hit
+                hitApply(aux, NULL,player1, player2);
+
+            else{
+                if(aux->direction == left)
+                    aux->x -= aux->speed;
+                else
+                    aux->x += aux->speed;
+            }
+            aux = aux->next;
+        }
+    }
+    return;
+}
+
+void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
+    if(player1->directionX == right){
+        if(isMovementValidRight(player1, player2)){
+            player1->x += player1->speedX;
+        }
+    }
+    else if(player1->directionX == left){
+        if(isMovementValidLeft(player1, player2))
+            player1->x -= player1->speedX;
+    }
+    if(player1->directionY == up){
+        if(isMovementValidUp(player1, player2)){
+            player1->y -= player1->speedY;
+            player1->speedY -= (BASE_GRAV);
+            if(player1->speedY < 0)
+                player1->directionY = down;
+        }
+    }
+    else if(player1->directionY == down){
+        if(isMovementValidDown(player1, player2)){
+            player1->y -= player1->speedY;
+            player1->speedY -= BASE_GRAV;
+        }
+        else if (player1->y > player2->y - player2->height / 2){ //Chegou no chão
+            player1->y = GROUND_LEVEL - player1->height / 2;
+            player1->speedY = BASE_SPEEDY;// * match->speedMult;
+            player1->directionY = none;
+            if(player1->directionX && !player1->stick->right && !player1->stick->left)
+                player1->directionX = none;
+            else if(player1->stick->right){
+                if(AT_RIGHT(player1, player2))
+                    player1->state = walkB;
+                else
+                    player1->state = walkF;
+                return;
+            }
+            else if(player1->stick->left){
+                if(AT_LEFT(player1, player2))
+                    player1->state = walkB;
+                else
+                    player1->state = walkF;
+                return;
+            }
+            player1->state = stand;
+        }
+    }
+    return;
+}

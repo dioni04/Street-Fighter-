@@ -15,9 +15,10 @@
 
 enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
+enum action{no, attack, block};
 
-#define MAX_X 1920
-#define MAX_Y 1080
+#define MAX_X 640.0
+#define MAX_Y 480.0
 #define FPS 30.0
 
 //Numeros base de elementos do jogo
@@ -26,13 +27,22 @@ enum direction{none, up, down, left, right};
 #define BASE_DMG 10
 #define BASE_POISE 100
 #define BASE_STAMINA 100
-#define BASE_GRAV 10
-#define GROUND_LEVEL (MAX_Y / 1000) //nivel do chao
-#define BASE_HEIGHT (MAX_Y / 5)
-#define BASE_LENGTH (MAX_X / 10)
+#define BASE_SPEEDX (MAX_X / 150.0)
+#define BASE_SPEEDY (MAX_Y / 25.0)
+#define PROJECTILE_SPEED (BASE_SPEEDX * 1.5)
+#define BASE_GRAV (MAX_Y/500)
+#define HEADER_LEVEL (MAX_Y * 0.15)
+#define GROUND_LEVEL (MAX_Y*0.8) //nivel do chao
 
-#define BACK_MOV_LEFT(X1,X2) ((X1) < (X2) ? true : false)
-#define BACK_MOV_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
+#define BASE_HEIGHT (MAX_Y*0.3)
+#define BASE_LENGTH (MAX_X*0.1)
+#define PROJ_SIZE (MAX_X*0.1)
+
+#define PROJ_COOLDOWN 2
+#define ATTACK_COOLDOWN 0.5
+
+#define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
+#define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
 
 //Vetores com os assets do jogo
 struct gameData{
@@ -52,40 +62,64 @@ struct mapData{
     FILE* soundMap;
 };
 
+typedef struct attack{
+    unsigned short id;
+    unsigned short direction;
+    unsigned short dmg;
+    struct attack* next;
+}ATTACK;
+
+typedef struct projectile{
+    float x;
+    float y;
+    float side;//Tamanho
+    short direction;
+    float speed;
+    unsigned int dmg;
+    struct projectile* next;
+}PROJECTILE;
+
 typedef struct joystick{
     bool up;
     bool down;
     bool left;
     bool right;
+    bool punch;
+    bool kick;
+    bool special;
+    bool shoot;
 }JOYSTICK;
 
 typedef struct player{
     struct character fighter;
     JOYSTICK* stick;
+    ATTACK* attacks;
+    PROJECTILE* projs;
     unsigned short state; //Stand, Crouch, Jump
-    unsigned short height;
-    unsigned short length;
+    float x;
+    float y;
+    float height;
+    float length;
+    float speedX;
+    float speedY;
     unsigned short rounds;
     unsigned short directionX;
     unsigned short directionY;
-    unsigned short speedX;
-    unsigned short speedY;
-    unsigned short health;
-    unsigned short poise;
-    unsigned short stamina;
+    short health;
+    short poise;
+    short stamina;
     unsigned short gauge;
-    unsigned int x;
-    unsigned int y;
+
 }PLAYER;
 
 typedef struct match{
     unsigned short time;
-    unsigned short speedMult; //Multiplicadores para partida
-    unsigned short dmgMult;
-    unsigned short gravMult;
-    unsigned short poiseMult;
-    unsigned short healthMult;
-    unsigned short staminaMult;
+    float speedMult; //Multiplicadores para partida
+    float dmgMult;
+    float gravMult;
+    float poiseMult;
+    float healthMult;
+    float staminaMult;
     struct mapData map;
     struct player* P1;
     struct player* P2;
@@ -97,9 +131,17 @@ typedef struct game{
     MATCH* match;
 }GAME;
 
+void moveUp(PLAYER* player);
+void moveLeft(PLAYER* player, PLAYER* player2);
+void moveDown(PLAYER* player, PLAYER* player2);
+void moveRight(PLAYER* player, PLAYER* player2);
 
-PLAYER* createPlayer(MATCH* match,int x, int y, unsigned short length, unsigned short height);
+//KEYBINDS* createKeys();
+MATCH* createMatch();
+PLAYER* createPlayer(MATCH* match,float x, float y);
 JOYSTICK* createJoystick();
+PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
+
 void destroyPlayer(PLAYER* player);
 bool backMovementLeft(PLAYER* player1, PLAYER* player2);
 bool backMovementRight(PLAYER* player1, PLAYER* player2);
@@ -108,5 +150,11 @@ bool isMovementValidUp(PLAYER* player1, PLAYER* player2);
 bool isMovementValidDown(PLAYER* player1, PLAYER* player2);
 bool isMovementValidLeft(PLAYER* player1, PLAYER* player2);
 bool isMovementValidRight(PLAYER* player1, PLAYER* player2);
+
+void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2);
+void moveProjectile(PLAYER* player1, PLAYER* player2);
+
+void destroyMatch(MATCH* match);
+void destroyProjectile(PROJECTILE** list, PROJECTILE* p);
 
 #endif
