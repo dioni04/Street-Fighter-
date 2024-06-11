@@ -298,7 +298,7 @@ void moveProjectile(PLAYER* player1, PLAYER* player2){
                     auxP2 = auxP2->next;
                 }
             }
-            else if(inRangeX(aux->x, player2) && inRangeY(aux->y, player2)) //Hit
+            else if(inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch) //Hit
                 hitApply(aux, NULL,player1, player2);
 
             else{
@@ -366,8 +366,9 @@ void checkHitAttack(PLAYER* attacker, PLAYER* victim){
     if(!attacker->attacks){
         return;
     }
-    if(inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim)){//hit
+    if(attacker->attacks->id == punch && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != walkB && victim->state != crouch)//hit
         victim->health -= attacker->attacks->dmg;
-        return;
-    }
+    else if(attacker->attacks->id == kick && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != crouch)
+        victim->health -= attacker->attacks->dmg;
+    return; 
 }

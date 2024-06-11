@@ -48,18 +48,33 @@ int main(){
         return 1;
     player1 = match->P1;
     player2 = match->P2;
-    player1->cooldownProj = al_create_timer(PROJ_COOLDOWN);
+    /*player1->cooldownProj = al_create_timer(PROJ_COOLDOWN);
     if(!player1->cooldownProj)
         return 1;
     player1->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
     if(!player1->cooldownAttack)
         return 1;
+    player1->attackDuration = al_create_timer(ATTACK_DURATION);
+    if(!player1->attackDuration)
+        return 1;
+    player2->cooldownProj = al_create_timer(PROJ_COOLDOWN);
+    if(!player2->cooldownProj)
+        return 1;
+    player2->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
+    if(!player2->cooldownAttack)
+        return 1;
+    player2->attackDuration = al_create_timer(ATTACK_DURATION);
+    if(!player2->attackDuration)
+        return 1;
+    */
     //printf("%f\n", player1->speedX);
     al_register_event_source(queue, al_get_timer_event_source(player1->cooldownProj));
     al_register_event_source(queue, al_get_timer_event_source(player1->cooldownAttack));
     al_register_event_source(queue, al_get_timer_event_source(player2->cooldownProj));
     al_register_event_source(queue, al_get_timer_event_source(player2->cooldownAttack));
-
+    al_register_event_source(queue, al_get_timer_event_source(player1->attackDuration));
+    al_register_event_source(queue, al_get_timer_event_source(player2->attackDuration));
+ 
     bool redraw = true;
 
     while(1){
@@ -69,7 +84,7 @@ int main(){
         if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)//Botao 'X' da Janela
             break;
         if(event.type == ALLEGRO_EVENT_KEY_DOWN){//Keybinds dos ataques
-            if(event.keyboard.keycode == ALLEGRO_KEY_R && !al_get_timer_started(player1->cooldownProj) && player1->state == stand && player1->stamina >= PROJ_COST){
+            if(event.keyboard.keycode == ALLEGRO_KEY_Y && !al_get_timer_started(player1->cooldownProj) && player1->state == stand && player1->stamina >= PROJ_COST){
                 if(AT_LEFT(player1->x, player2->x))
                     player1->projs = createProjectile(player1, right, player1->projs);
                 else
@@ -78,7 +93,16 @@ int main(){
                 al_start_timer(player1->cooldownProj);
                 player1->stamina -= PROJ_COST;
             }
-            /*
+            if(event.keyboard.keycode == ALLEGRO_KEY_L && !al_get_timer_started(player2->cooldownProj) && player2->state == stand && player2->stamina >= PROJ_COST){
+                if(AT_LEFT(player2->x, player1->x))
+                    player2->projs = createProjectile(player2, right, player2->projs);
+                else
+                    player2->projs = createProjectile(player2, left, player2->projs);
+                // printf("R");
+                al_start_timer(player2->cooldownProj);
+                player2->stamina -= PROJ_COST;    
+            }
+      /*
             if(event.keyboard.keycode == ALLEGRO_KEY_T && player1->state == stand && player1->cooldownAttack <= 0){
                 if(AT_LEFT(player1->x, player2->x))
                     createAttack(player1, punch,left);
@@ -122,10 +146,14 @@ int main(){
                 al_stop_timer(player1->cooldownAttack);
             if(event.timer.source == player1->cooldownProj)
                 al_stop_timer(player1->cooldownProj);
+            if(event.timer.source == player1->attackDuration)
+                al_stop_timer(player1->attackDuration);
             if(event.timer.source == player2->cooldownAttack)
                 al_stop_timer(player2->cooldownAttack);
             if(event.timer.source == player2->cooldownProj)
                 al_stop_timer(player2->cooldownProj);
+            if(event.timer.source == player2->attackDuration)
+                al_stop_timer(player2->attackDuration);
 
             if(event.timer.source == seconds){
                 //Timer a todo segundo
@@ -164,7 +192,6 @@ int main(){
             player1->stamina = (player1->stamina > BASE_STAMINA) ? BASE_STAMINA : player1->stamina;//Limite superior
             if(player1->stamina > 0)
                 al_draw_filled_rectangle((MAX_X * 0.25)*(1 - player1->stamina*0.01),HEADER_LEVEL * 0.75, MAX_X*0.25, HEADER_LEVEL,al_map_rgb(255, 0, 255)); //Stamina P1
-            // printf("%d\n", player1->stamina);
             if(player1->projs){
                 PROJECTILE* aux = player1->projs;
                 while(aux){
@@ -198,7 +225,6 @@ int main(){
             al_flip_display();
         }
     }
-
     destroyMatch(match);
     al_destroy_timer(timer);
     al_destroy_timer(seconds);
