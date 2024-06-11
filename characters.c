@@ -67,13 +67,17 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
     player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
     if(!player->cooldownAttack)
         return NULL;
-    //player->keys = createKeys();
-
+    player->attackDuration = al_create_timer(ATTACK_DURATION);
+    if(!player->attackDuration)
+        return NULL;
+    player->damageState = al_create_timer(DAMAGE_DURATION);
+    if(!player->damageState)
+        return NULL;
+    //JOYSTICK
     if(!player->stick){
         destroyPlayer(player);
         return NULL;
     }
-
     return player;
 }
 
@@ -173,7 +177,6 @@ void destroyMatch(MATCH* match){
 }
 
 void destroyPlayer(PLAYER* player){
-
     /*
     fclose(player->fighter.model);
     fclose(player->fighter.sounds);
@@ -183,8 +186,9 @@ void destroyPlayer(PLAYER* player){
     free(player->stick);
     al_destroy_timer(player->cooldownAttack);
     al_destroy_timer(player->cooldownProj);
+    al_destroy_timer(player->attackDuration);
+    al_destroy_timer(player->damageState);
     free(player);
-
     return;
 }
 

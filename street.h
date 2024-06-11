@@ -42,11 +42,16 @@ enum attackType{punch, kick};
 #define BASE_LENGTH (MAX_X*0.1)
 #define PROJ_SIZE (MAX_X*0.05)
 
+#define DAMAGE_DURATION 0.1
+#define ATTACK_DURATION 0.25
+
 #define PROJ_COOLDOWN 1
 #define ATTACK_COOLDOWN 0.5
 
 #define STAMINA_REGEN 1
 #define PROJ_COST 20
+#define PUNCH_COST 10
+#define KICK_COST 15 
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
@@ -119,6 +124,8 @@ typedef struct player{
     short stamina;
     ALLEGRO_TIMER* cooldownProj;
     ALLEGRO_TIMER* cooldownAttack;
+    ALLEGRO_TIMER* attackDuration;
+    ALLEGRO_TIMER* damageState;
     unsigned short gauge;
 
 }PLAYER;
