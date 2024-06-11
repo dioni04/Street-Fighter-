@@ -16,6 +16,7 @@
 enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
 enum action{no, attack, block};
+enum attackType{punch, kick};
 
 #define MAX_X 640.0
 #define MAX_Y 480.0
@@ -24,22 +25,28 @@ enum action{no, attack, block};
 //Numeros base de elementos do jogo
 #define MATCH_LENGTH 90
 #define BASE_HEALTH 100
-#define BASE_DMG 10
+#define BASE_DMG_PUNCH 15
+#define BASE_DMG_KICK 25
+#define BASE_DMG_PROJ 30
 #define BASE_POISE 100
 #define BASE_STAMINA 100
 #define BASE_SPEEDX (MAX_X / 150.0)
 #define BASE_SPEEDY (MAX_Y / 25.0)
-#define PROJECTILE_SPEED (BASE_SPEEDX * 1.5)
+#define PROJECTILE_SPEED (BASE_SPEEDX * 2.5)
 #define BASE_GRAV (MAX_Y/500)
 #define HEADER_LEVEL (MAX_Y * 0.15)
+#define FOOTER_LEVEL (MAX_Y * 0.85)
 #define GROUND_LEVEL (MAX_Y*0.8) //nivel do chao
 
 #define BASE_HEIGHT (MAX_Y*0.3)
 #define BASE_LENGTH (MAX_X*0.1)
-#define PROJ_SIZE (MAX_X*0.1)
+#define PROJ_SIZE (MAX_X*0.05)
 
-#define PROJ_COOLDOWN 2
+#define PROJ_COOLDOWN 1
 #define ATTACK_COOLDOWN 0.5
+
+#define STAMINA_REGEN 1
+#define PROJ_COST 20
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
@@ -64,8 +71,10 @@ struct mapData{
 
 typedef struct attack{
     unsigned short id;
-    unsigned short direction;
     unsigned short dmg;
+    short direction;
+    float x;//PONTA DO ATAQUE
+    float y;
     struct attack* next;
 }ATTACK;
 
@@ -108,6 +117,8 @@ typedef struct player{
     short health;
     short poise;
     short stamina;
+    ALLEGRO_TIMER* cooldownProj;
+    ALLEGRO_TIMER* cooldownAttack;
     unsigned short gauge;
 
 }PLAYER;
@@ -156,5 +167,11 @@ void moveProjectile(PLAYER* player1, PLAYER* player2);
 
 void destroyMatch(MATCH* match);
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p);
+
+void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2);
+void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event);
+
+ATTACK* createAttack(PLAYER* player, short id, short direction);
+void destroyAttack(PLAYER* player);
 
 #endif

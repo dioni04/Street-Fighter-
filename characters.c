@@ -55,9 +55,18 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
     player->directionY = none;
     player->gauge = 0;
     player->rounds = 0;
+    player->cooldownProj = 0;
     player->stick = createJoystick();
     player->projs = NULL;
     player->attacks = NULL;
+
+    //TIMERS COOLDOWN
+    player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
+    if(!player->cooldownProj)
+        return NULL;
+    player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
+    if(!player->cooldownAttack)
+        return NULL;
     //player->keys = createKeys();
 
     if(!player->stick){
@@ -86,6 +95,37 @@ JOYSTICK* createJoystick(){
     return stick;
 }
 
+void destroyAttack(PLAYER* player){
+    free(player->attacks);
+    player->attacks = NULL;
+    return;
+}
+
+ATTACK* createAttack(PLAYER* player, short id, short direction){
+    ATTACK* attack = NULL;
+
+    attack = (ATTACK*)malloc(sizeof(ATTACK));
+    if(!attack)
+        return NULL;
+    attack->direction = direction;
+    if(id == punch){//soco
+        attack->dmg = BASE_DMG_PUNCH;
+        attack->y = player->y;
+    }
+    else{//chute
+        attack->dmg = BASE_DMG_KICK;
+        attack->y = player->y + player->height / 2;
+    }
+    attack->id = id;
+    if(direction == left)
+        attack->x = player->x - player->length;
+    else
+        attack->x = player->x + player->length;
+
+    al_start_timer(player->cooldownAttack);
+    return attack;
+}
+
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     PROJECTILE* proj = NULL;
 
@@ -93,7 +133,7 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     if(!proj)
         return NULL;
     proj->direction = direction;
-    proj->dmg = BASE_DMG;
+    proj->dmg = BASE_DMG_PROJ;
     proj->speed = PROJECTILE_SPEED;
     proj->y = player->y;
     if(direction == left)
@@ -141,7 +181,10 @@ void destroyPlayer(PLAYER* player){
     //free(player->keys);
     //FALTA DESTROIR LISTAS
     free(player->stick);
+    al_destroy_timer(player->cooldownAttack);
+    al_destroy_timer(player->cooldownProj);
     free(player);
+
     return;
 }
 

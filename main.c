@@ -2,6 +2,10 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/color.h>
+#include <allegro5/events.h>
+#include <allegro5/keycodes.h>
+#include <allegro5/timer.h>
+#include <stdio.h>
 
 int main(){
     al_init();
@@ -13,6 +17,7 @@ int main(){
     ALLEGRO_TIMER* seconds = al_create_timer(1.0);
     if(!seconds)
         return 1;
+
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     if(!queue)
         return 1;
@@ -43,7 +48,17 @@ int main(){
         return 1;
     player1 = match->P1;
     player2 = match->P2;
+    player1->cooldownProj = al_create_timer(PROJ_COOLDOWN);
+    if(!player1->cooldownProj)
+        return 1;
+    player1->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
+    if(!player1->cooldownAttack)
+        return 1;
     //printf("%f\n", player1->speedX);
+    al_register_event_source(queue, al_get_timer_event_source(player1->cooldownProj));
+    al_register_event_source(queue, al_get_timer_event_source(player1->cooldownAttack));
+    al_register_event_source(queue, al_get_timer_event_source(player2->cooldownProj));
+    al_register_event_source(queue, al_get_timer_event_source(player2->cooldownAttack));
 
     bool redraw = true;
 
@@ -51,6 +66,28 @@ int main(){
         char counterStr[10];
         al_wait_for_event(queue, &event);
 
+        if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)//Botao 'X' da Janela
+            break;
+        if(event.type == ALLEGRO_EVENT_KEY_DOWN){//Keybinds dos ataques
+            if(event.keyboard.keycode == ALLEGRO_KEY_R && !al_get_timer_started(player1->cooldownProj) && player1->state == stand && player1->stamina >= PROJ_COST){
+                if(AT_LEFT(player1->x, player2->x))
+                    player1->projs = createProjectile(player1, right, player1->projs);
+                else
+                    player1->projs = createProjectile(player1, left, player1->projs);
+                // printf("R");
+                al_start_timer(player1->cooldownProj);
+                player1->stamina -= PROJ_COST;
+            }
+            /*
+            if(event.keyboard.keycode == ALLEGRO_KEY_T && player1->state == stand && player1->cooldownAttack <= 0){
+                if(AT_LEFT(player1->x, player2->x))
+                    createAttack(player1, punch,left);
+                else
+                    createAttack(player1, punch,right);
+                al_start_timer(player1->cooldownAttack);
+            }
+            */
+        }
         //TECLAS DE MOVIMENTACAO
         if(event.type == ALLEGRO_EVENT_KEY_DOWN || event.type == ALLEGRO_EVENT_KEY_UP){
             if(event.keyboard.keycode == ALLEGRO_KEY_W){
@@ -77,25 +114,40 @@ int main(){
             if(event.keyboard.keycode == ALLEGRO_KEY_RIGHT){
                 moveRight(player2, player1);
             }
-            if(event.keyboard.keycode == ALLEGRO_KEY_R){
-                if(AT_LEFT(player1->x, player2->x))
-                    createProjectile(player1, left, player1->projs);
-                else
-                    createProjectile(player1, right, player1->projs);
-                printf("R");
-            }
-            /* FAZER KEYBINDS DOS ATAQUES AQUI */
         }
-        if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)//Botao 'X' da Janela
-            break;
         if(event.type == ALLEGRO_EVENT_TIMER){ //Novo clock event
             redraw = true;
+            //COOLDOWNS
+            if(event.timer.source == player1->cooldownAttack)
+                al_stop_timer(player1->cooldownAttack);
+            if(event.timer.source == player1->cooldownProj)
+                al_stop_timer(player1->cooldownProj);
+            if(event.timer.source == player2->cooldownAttack)
+                al_stop_timer(player2->cooldownAttack);
+            if(event.timer.source == player2->cooldownProj)
+                al_stop_timer(player2->cooldownProj);
+
             if(event.timer.source == seconds){
                 //Timer a todo segundo
                 match->time--;
-                printf("%d\n", match->time);
-                if(!match->time)
-                    break;//END ROUND
+                //Round Over
+                if(!match->time){
+                    if(player1->health == player2->health){
+                        roundEnd(disp, font, match, player1, player2);
+                    }
+                    else if(player1->health > player2->health){
+                        player1->rounds++;
+                        if(player1->rounds == 2)
+                            break;
+                    }
+                    else{
+                        player2->rounds++;
+                        roundEnd(disp, font, match, player2, NULL);
+                        if(player2->rounds == 2)
+                            break;
+                    }
+                    pressSpace(queue, &event);
+                }
             }
         }
         if(redraw && al_is_event_queue_empty(queue)){ //Novo Frame
@@ -107,17 +159,40 @@ int main(){
             al_clear_to_color(al_map_rgb(0,0,0));
             snprintf(counterStr, sizeof(counterStr), "%d",match->time);
             al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL / 4, ALLEGRO_ALIGN_CENTER, counterStr);
-            if(player1->health > 0)
-                al_draw_filled_rectangle((MAX_X * 0.45)*(1 - player1->health*0.01),0, MAX_X*0.45, HEADER_LEVEL / 2,al_map_rgb(255, 255, 255)); //VIDA P1
+
+            player1->stamina += STAMINA_REGEN;
+            player1->stamina = (player1->stamina > BASE_STAMINA) ? BASE_STAMINA : player1->stamina;//Limite superior
             if(player1->stamina > 0)
                 al_draw_filled_rectangle((MAX_X * 0.25)*(1 - player1->stamina*0.01),HEADER_LEVEL * 0.75, MAX_X*0.25, HEADER_LEVEL,al_map_rgb(255, 0, 255)); //Stamina P1
-            if(player1->projs)
-                al_draw_filled_rectangle(player1->projs->x - player1->projs->side / 2, player1->projs->y - player1->projs->side, player1->projs->x + player1->projs->side,player1->projs->y + player1->projs->side, al_map_rgb(0,255,0));
+            // printf("%d\n", player1->stamina);
+            if(player1->projs){
+                PROJECTILE* aux = player1->projs;
+                while(aux){
+                    al_draw_filled_rectangle(aux->x - aux->side / 2, aux->y - aux->side, aux->x + aux->side,player1->projs->y + aux->side, al_map_rgb(0,255,0));
+                    aux = aux->next;
+                }
+            }
+            if(player1->health > 0)
+                al_draw_filled_rectangle((MAX_X * 0.45)*(1 - player1->health*0.01),0, MAX_X*0.45, HEADER_LEVEL / 2,al_map_rgb(255, 255, 255)); //VIDA P1
+            else
+                break;
             if(player2->health > 0)
                 al_draw_filled_rectangle(MAX_X*0.55, 0 ,(MAX_X) - ((1 - player2->health * 0.01) * MAX_X * 0.45), HEADER_LEVEL / 2, al_map_rgb(255, 255, 255)); //VIDA P2
+            else{
+                player1->rounds++;
+                roundEnd(disp, font, match, player1, NULL);
+                while(1){//Tela fim de Round
+                    al_wait_for_event(queue, &event);
+                    if(event.type == ALLEGRO_EVENT_KEY_UP && event.keyboard.keycode == ALLEGRO_KEY_SPACE)
+                        break;
+                }
+                if(player1->rounds == 2)
+                    break;
+            }
             if(player2->stamina > 0)
                 al_draw_filled_rectangle(MAX_X*0.75, HEADER_LEVEL * 0.75,(MAX_X) - ((1 - player2->stamina * 0.01) * MAX_X * 0.25) ,HEADER_LEVEL,al_map_rgb(255, 0, 255)); //Stamina P2
-            al_draw_filled_rectangle(player1->x - player1->length / 2, player1->y - player1->height / 2,player1->x + player1->length / 2, player1->y + player1->height / 2,al_map_rgb(0,0,255));
+            if(player1->state != crouch)
+                al_draw_filled_rectangle(player1->x - player1->length / 2, player1->y - player1->height / 2,player1->x + player1->length / 2, player1->y + player1->height / 2,al_map_rgb(0,0,255));
             al_draw_filled_rectangle(player2->x - player2->length / 2, player2->y - player2->height / 2,player2->x + player2->length / 2, player2->y + player2->height / 2,al_map_rgb(255,0,0));
             al_draw_filled_rectangle(0, GROUND_LEVEL, MAX_X, MAX_Y,al_map_rgb(255, 255, 255));
             al_flip_display();

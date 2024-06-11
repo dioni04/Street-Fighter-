@@ -1,4 +1,6 @@
 #include "street.h"
+#include <allegro5/events.h>
+#include <allegro5/timer.h>
 #include <stdbool.h>
 #include <time.h>
 
@@ -16,6 +18,52 @@ KEYBINDS* createKeys(){
     return key;
 }
 */
+
+void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event){
+    while(1){
+        al_wait_for_event(queue, event);
+        if(event->type == ALLEGRO_EVENT_KEY_UP && event->keyboard.keycode == ALLEGRO_KEY_SPACE)
+            break;
+    }
+    return;
+}
+
+//winner2 eh diferente de NULL se for empate
+void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2){
+    if(winner && winner2){//Empate
+        al_clear_to_color(al_map_rgb(0,0,0));
+        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "ROUND OVER");
+        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "TIE");
+    }
+    else if(winner->rounds == 1){
+        al_clear_to_color(al_map_rgb(0,0,0));
+        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "ROUND OVER");
+        if(winner == match->P1)
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 1 WINS");
+        else
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 2 WINS");
+    }
+    else{//Match end
+        al_clear_to_color(al_map_rgb(0,0,0));
+        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "MATCH OVER");
+        if(winner == match->P1)
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 1 WINS");
+        else
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 2 WINS");
+    }
+    match->P1->health = BASE_HEALTH;
+    match->P1->stamina = BASE_STAMINA;
+    match->P2->health = BASE_HEALTH;
+    match->P2->stamina = BASE_STAMINA;
+    al_stop_timer(match->P1->cooldownAttack);
+    al_stop_timer(match->P1->cooldownProj);
+    al_stop_timer(match->P2->cooldownAttack);
+    al_stop_timer(match->P2->cooldownProj);
+    match->time = MATCH_LENGTH;
+    al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, FOOTER_LEVEL, ALLEGRO_ALIGN_CENTER, "PRESS SPACE TO CONTINUE");
+    al_flip_display();
+    return;
+}
 
 bool inRangeX(float x, PLAYER* player2){
     if(x <= player2->x + (player2->length / 2) && x >= player2->x - (player2->length / 2))
@@ -226,7 +274,7 @@ bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
 //Aplica dano dependendo de oque fex o hit
 void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* killer, PLAYER* victim){
     if(projectile){
-        victim -= projectile->dmg;
+        victim->health -= projectile->dmg;
         destroyProjectile(&killer->projs, projectile);
     }
     else if(attack){}
@@ -241,9 +289,13 @@ void moveProjectile(PLAYER* player1, PLAYER* player2){
             if(aux->x < 0 || aux->x > MAX_X)//Miss
                 destroyProjectile(&player1->projs, aux);
             else if(player2->projs){//Checa se acerta outros projeteis
-                if(aux->x <= player2->projs->x + player2->projs->side / 2 && aux->x >= player2->projs->x - player2->projs->side / 2){//Hit projetil
-                    destroyProjectile(&player1->projs, aux);
-                    destroyProjectile(&player2->projs, player2->projs);
+                PROJECTILE* auxP2 = player2->projs;
+                while (auxP2) {
+                    if(aux->x <= auxP2->x + auxP2->side / 2 && aux->x >= auxP2->x - auxP2->side / 2){//Hit projetil
+                        destroyProjectile(&player1->projs, aux);
+                        destroyProjectile(&player2->projs, auxP2);
+                    }
+                    auxP2 = auxP2->next;
                 }
             }
             else if(inRangeX(aux->x, player2) && inRangeY(aux->y, player2)) //Hit
@@ -308,4 +360,14 @@ void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
         }
     }
     return;
+}
+
+void checkHitAttack(PLAYER* attacker, PLAYER* victim){
+    if(!attacker->attacks){
+        return;
+    }
+    if(inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim)){//hit
+        victim->health -= attacker->attacks->dmg;
+        return;
+    }
 }
