@@ -43,15 +43,15 @@ enum attackType{punch, kick};
 #define PROJ_SIZE (MAX_X*0.05)
 
 #define DAMAGE_DURATION 0.1
-#define ATTACK_DURATION 0.25
+#define ATTACK_DURATION 0.15
 
 #define PROJ_COOLDOWN 1
-#define ATTACK_COOLDOWN 0.5
+#define ATTACK_COOLDOWN 0.25
 
 #define STAMINA_REGEN 1
-#define PROJ_COST 20
-#define PUNCH_COST 10
-#define KICK_COST 15 
+#define PROJ_COST 25
+#define PUNCH_COST 15
+#define KICK_COST 20
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
@@ -78,6 +78,7 @@ typedef struct attack{
     unsigned short id;
     unsigned short dmg;
     short direction;
+    bool hitFlag;
     float x;//PONTA DO ATAQUE
     float y;
     struct attack* next;
@@ -149,20 +150,28 @@ typedef struct game{
     MATCH* match;
 }GAME;
 
-void moveUp(PLAYER* player);
-void moveLeft(PLAYER* player, PLAYER* player2);
-void moveDown(PLAYER* player, PLAYER* player2);
-void moveRight(PLAYER* player, PLAYER* player2);
-
-//KEYBINDS* createKeys();
 MATCH* createMatch();
 PLAYER* createPlayer(MATCH* match,float x, float y);
 JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
+ATTACK* createAttack(PLAYER* player, short id, short direction);
 
+void destroyList(PROJECTILE* list);
 void destroyPlayer(PLAYER* player);
-bool backMovementLeft(PLAYER* player1, PLAYER* player2);
-bool backMovementRight(PLAYER* player1, PLAYER* player2);
+void destroyAttack(PLAYER* player);
+void destroyProjectile(PROJECTILE** list, PROJECTILE* p);
+void destroyMatch(MATCH* match);
+
+void attackWrapper(PLAYER* attacker, PLAYER* victim, short id);
+void projectileWrapper(PLAYER* attacker, PLAYER* victim);
+
+bool inRangeX(float x, PLAYER* player2);
+bool inRangeY(float y, PLAYER* player2);
+
+void moveUp(PLAYER* player);
+void moveLeft(PLAYER* player, PLAYER* player2);
+void moveDown(PLAYER* player, PLAYER* player2);
+void moveRight(PLAYER* player, PLAYER* player2);
 
 bool isMovementValidUp(PLAYER* player1, PLAYER* player2);
 bool isMovementValidDown(PLAYER* player1, PLAYER* player2);
@@ -172,13 +181,15 @@ bool isMovementValidRight(PLAYER* player1, PLAYER* player2);
 void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2);
 void moveProjectile(PLAYER* player1, PLAYER* player2);
 
-void destroyMatch(MATCH* match);
-void destroyProjectile(PROJECTILE** list, PROJECTILE* p);
+void checkHitAttack(PLAYER* attacker, PLAYER* victim);
+void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* attacker, PLAYER* victim);
 
-void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2);
+void staminaRegen(PLAYER* player);
+
+void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event);
 void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event);
 
-ATTACK* createAttack(PLAYER* player, short id, short direction);
-void destroyAttack(PLAYER* player);
+void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2);
+void cooldowns(ALLEGRO_EVENT event, PLAYER* player);
 
 #endif

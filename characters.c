@@ -1,5 +1,4 @@
 #include "street.h"
-#include <time.h>
 
 //Cria Partida
 MATCH* createMatch(){
@@ -125,7 +124,7 @@ ATTACK* createAttack(PLAYER* player, short id, short direction){
         attack->x = player->x - player->length;
     else
         attack->x = player->x + player->length;
-
+    attack->hitFlag = false;
     al_start_timer(player->cooldownAttack);
     return attack;
 }
@@ -152,6 +151,7 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
 //Libera projetil e relinka a lista
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
     PROJECTILE* aux = *list;
+    if (!list || !*list || !p) return;
     if(*list == p){
         *list = (*list)->next;
         free(p);
@@ -164,6 +164,16 @@ void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
     return;
 }
 
+void destroyList(PROJECTILE* list){
+    PROJECTILE* aux;
+
+    while(list){
+        aux = list->next;
+        free(list);
+        list = aux;
+    }
+    return;
+}
 
 void destroyMatch(MATCH* match){
 
@@ -182,8 +192,8 @@ void destroyPlayer(PLAYER* player){
     fclose(player->fighter.sounds);
     */
     //free(player->keys);
-    //FALTA DESTROIR LISTAS
     free(player->stick);
+    destroyList(player->projs);
     al_destroy_timer(player->cooldownAttack);
     al_destroy_timer(player->cooldownProj);
     al_destroy_timer(player->attackDuration);
@@ -192,3 +202,26 @@ void destroyPlayer(PLAYER* player){
     return;
 }
 
+void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
+    if(AT_LEFT(attacker->x, victim->x))
+        attacker->attacks = createAttack(attacker, id,right);
+    else
+        attacker->attacks = createAttack(attacker, id,left);
+    al_start_timer(attacker->attackDuration);
+    al_start_timer(attacker->cooldownAttack);
+    if(id == punch)
+        attacker->stamina -= PUNCH_COST;
+    else
+        attacker->stamina -= KICK_COST;
+    return;
+}
+
+void projectileWrapper(PLAYER* attacker, PLAYER* victim){
+    if(AT_LEFT(attacker->x, victim->x))
+        attacker->projs = createProjectile(attacker, right, attacker->projs);
+    else
+        attacker->projs = createProjectile(attacker, left, attacker->projs);
+    al_start_timer(attacker->cooldownProj);
+    attacker->stamina -= PROJ_COST;
+    return;
+}
