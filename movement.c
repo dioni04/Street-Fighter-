@@ -247,7 +247,7 @@ void moveProjectile(PLAYER* player1, PLAYER* player2){
                 }
             }
 
-            if(aux && inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch){ //Hit
+            if(aux && inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch && player2->state != walkB){ //Hit
                 hitApply(aux, NULL,player1, player2);
                 aux = NULL;
             }
