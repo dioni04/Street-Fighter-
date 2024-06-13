@@ -2,6 +2,7 @@
 
 int main(){
     al_init();
+    al_init_primitives_addon();
     al_install_keyboard();
 
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS);
@@ -137,7 +138,30 @@ int main(){
                 if(player1->rounds == 2)
                     break;
             }
-
+            //PLAYER1
+            if(player1->rounds <= 1)
+                al_draw_circle(MAX_X * 0.35,HEADER_LEVEL * 0.875, HEADER_LEVEL*0.125, al_map_rgb(255,255,255), -1);
+            else  
+                al_draw_filled_circle(MAX_X * 0.35,HEADER_LEVEL * 0.875, HEADER_LEVEL*0.125, al_map_rgb(255,255,255));
+                //al_draw_filled_rectangle(MAX_X * 0.30,HEADER_LEVEL * 0.75, MAX_X* 0.35,HEADER_LEVEL,al_map_rgb(255,255,255));
+            if(player1->rounds == 0)
+                al_draw_circle(MAX_X * 0.40,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255), -1);
+            else
+                al_draw_filled_circle(MAX_X * 0.40,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255));
+                ///al_draw_filled_rectangle(MAX_X * 0.40,HEADER_LEVEL * 0.75, MAX_X* 0.45,HEADER_LEVEL,al_map_rgb(255,255,255));
+            //PLAYER2
+            if(player2->rounds == 0)
+                al_draw_circle(MAX_X * 0.60,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255), -1);
+                //al_draw_rectangle(MAX_X * 0.55,HEADER_LEVEL * 0.75, MAX_X* 0.60,HEADER_LEVEL,al_map_rgb(255,255,255), -1);
+            else
+                al_draw_filled_circle(MAX_X * 0.60,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255));
+                // al_draw_filled_rectangle(MAX_X * 0.55,HEADER_LEVEL * 0.75, MAX_X* 0.60,HEADER_LEVEL,al_map_rgb(255,255,255));
+            if(player2->rounds <= 1)
+                al_draw_circle(MAX_X * 0.65,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255), -1);
+                //al_draw_rectangle(MAX_X * 0.65,HEADER_LEVEL * 0.75, MAX_X* 0.70,HEADER_LEVEL,al_map_rgb(255,255,255), -1);
+            else
+                al_draw_filled_circle(MAX_X * 0.65,HEADER_LEVEL * 0.875, HEADER_LEVEL * 0.125,al_map_rgb(255,255,255));
+                //al_draw_filled_rectangle(MAX_X * 0.65,HEADER_LEVEL * 0.75, MAX_X* 0.70,HEADER_LEVEL,al_map_rgb(255,255,255));
             //STAMINA
             staminaRegen(player1);
             staminaRegen(player2);
