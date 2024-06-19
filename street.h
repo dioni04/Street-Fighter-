@@ -9,17 +9,20 @@
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_ttf.h>
 #include <allegro5/keyboard.h>
 #include <allegro5/display.h>
 #include <allegro5/events.h>
+#include <allegro5/allegro_image.h>
 
 enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
-enum action{no, attack, block};
+enum action{attack, hit, projectile};
 enum attackType{punch, kick};
 
-#define MAX_X 640.0
-#define MAX_Y 480.0
+#define MAX_X 544.0
+#define MAX_Y 320.0
 #define FPS 30.0
 
 //Numeros base de elementos do jogo
@@ -30,13 +33,16 @@ enum attackType{punch, kick};
 #define BASE_DMG_PROJ 30
 #define BASE_POISE 100
 #define BASE_STAMINA 100
+#define MAX_GAUGE 100
+
 #define BASE_SPEEDX (MAX_X / 150.0)
 #define BASE_SPEEDY (MAX_Y / 25.0)
 #define PROJECTILE_SPEED (BASE_SPEEDX * 2.5)
 #define BASE_GRAV (MAX_Y/500)
+
 #define HEADER_LEVEL (MAX_Y * 0.15)
-#define FOOTER_LEVEL (MAX_Y * 0.85)
-#define GROUND_LEVEL (MAX_Y*0.8) //nivel do chao
+#define FOOTER_LEVEL (MAX_Y * 0.8)
+#define GROUND_LEVEL (MAX_Y*0.875) //nivel do chao
 
 #define BASE_HEIGHT (MAX_Y*0.3)
 #define BASE_LENGTH (MAX_X*0.1)
@@ -53,8 +59,14 @@ enum attackType{punch, kick};
 #define PUNCH_COST 15
 #define KICK_COST 20
 
+#define ATTACK_GAUGE_GAIN 5
+#define DAMAGE_GAUGE_GAIN 3
+#define PROJECTILE_GAUGE_GAIN 4
+
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
+
+#define IMAGE_NUM 4
 
 //Vetores com os assets do jogo
 struct gameData{
@@ -70,8 +82,8 @@ struct character{
 };
 
 struct mapData{
-    FILE* map;
-    FILE* soundMap;
+    ALLEGRO_BITMAP** map;
+    ALLEGRO_AUDIO_STREAM* music;
 };
 
 typedef struct attack{
@@ -123,22 +135,32 @@ typedef struct player{
     short health;
     short poise;
     short stamina;
+    unsigned short gauge;
     ALLEGRO_TIMER* cooldownProj;
     ALLEGRO_TIMER* cooldownAttack;
     ALLEGRO_TIMER* attackDuration;
     ALLEGRO_TIMER* damageState;
-    unsigned short gauge;
-
 }PLAYER;
 
+struct uiData{
+    ALLEGRO_BITMAP* staminaBar;
+    ALLEGRO_BITMAP* healthBar;
+    ALLEGRO_BITMAP* gaugeBar;
+    ALLEGRO_BITMAP* round;
+};
+
 typedef struct match{
+    //ALLEGRO_SAMPLE* music;
     unsigned short time;
+
     float speedMult; //Multiplicadores para partida
     float dmgMult;
     float gravMult;
     float poiseMult;
     float healthMult;
     float staminaMult;
+
+    struct uiData ui;
     struct mapData map;
     struct player* P1;
     struct player* P2;
@@ -156,7 +178,7 @@ JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
 ATTACK* createAttack(PLAYER* player, short id, short direction);
 
-void destroyList(PROJECTILE* list);
+void destroyList(PROJECTILE** list);
 void destroyPlayer(PLAYER* player);
 void destroyAttack(PLAYER* player);
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p);

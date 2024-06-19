@@ -1,4 +1,5 @@
 #include "street.h"
+#include <time.h>
 
 void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event){
     while(1){
@@ -30,8 +31,8 @@ void roundReset(MATCH* match){
     match->P1->y = GROUND_LEVEL - BASE_HEIGHT / 2;
     match->P2->x = MAX_X - MAX_X / 4.0;
     match->P2->y = GROUND_LEVEL - BASE_HEIGHT / 2;
-    destroyList(match->P1->projs);
-    destroyList(match->P2->projs);
+    destroyList(&match->P1->projs);
+    destroyList(&match->P2->projs);
     return;
 }
 
@@ -122,5 +123,17 @@ void cooldowns(ALLEGRO_EVENT event, PLAYER* player){
 void staminaRegen(PLAYER* player){
     player->stamina += STAMINA_REGEN;
     player->stamina = (player->stamina > BASE_STAMINA) ? BASE_STAMINA : player->stamina;//Limite superior
+    return;
+}
+
+//Recebe barra dependendo de oque aconteceu
+void gaugeGain(PLAYER* player, short id){
+    if(id == attack)
+        player->gauge += ATTACK_GAUGE_GAIN;
+    else if(id == projectile)
+        player->gauge += PROJECTILE_GAUGE_GAIN;
+    else
+        player->gauge += DAMAGE_GAUGE_GAIN;
+    player->gauge = (player->gauge > MAX_GAUGE) ? MAX_GAUGE : player->stamina; //Limite superior
     return;
 }

@@ -140,7 +140,8 @@ bool isMovementValidUp(PLAYER* player1, PLAYER* player2){
 //Calcula se movimento é valido no eixo Y
 bool isMovementValidDown(PLAYER* player1, PLAYER* player2){
 
-    if((player1->y + (player1->height / 2) + player1->speedY) > GROUND_LEVEL)
+    //esse player1->height sem o /2 eh para manter consistente o check sobre o chao
+    if((player1->y + (player1->height * 0.75) + player1->speedY) > GROUND_LEVEL)
         return false;
     //Se tiver encima do outro player
     if(player1->y < player2->y && inRangeX(player1->x, player2))
@@ -247,8 +248,11 @@ void moveProjectile(PLAYER* player1, PLAYER* player2){
                 }
             }
 
-            if(aux && inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch && player2->state != walkB){ //Hit
-                hitApply(aux, NULL,player1, player2);
+            if(aux && inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch){ //Hit
+                if(player2->state == walkB)
+                    destroyProjectile(&player1->projs, aux);
+                else
+                    hitApply(aux, NULL,player1, player2);
                 aux = NULL;
             }
 

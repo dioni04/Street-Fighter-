@@ -1,4 +1,5 @@
 #include "street.h"
+#include <allegro5/bitmap_io.h>
 
 //Cria Partida
 MATCH* createMatch(){
@@ -8,6 +9,26 @@ MATCH* createMatch(){
     if(!match)
         return NULL;
 
+    //match->music = al_load_sample("last_v8.mod");
+    //must_init(match->music, "last_v8.mod");
+    //al_play_sample( match->music, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+    //match->music =
+    match->map.music = al_load_audio_stream("/home/dioni/UFPR/2024.1/prog2/Street-Fighter-/last_v8.mod", 4, 2048);
+    al_set_audio_stream_playing(match->map.music, true);
+    al_set_audio_stream_gain(match->map.music, 1.0);
+
+    match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * IMAGE_NUM);
+    for(int i = 1; i <= IMAGE_NUM; i++){
+        char c = i + '0'; //numero de i em char
+        char location[25] = "images/map/forest/*.png";
+        location[18] = c;
+        match->map.map[i] = al_load_bitmap(location);
+    }
+
+    match->ui.staminaBar = al_load_bitmap("images/ui/stamina.png");
+    match->ui.healthBar = al_load_bitmap("images/ui/health.png");
+    if(!match->map.map)
+        return NULL;
     match->P1 = createPlayer(match ,MAX_X/4.0, GROUND_LEVEL - BASE_HEIGHT / 2);
     if(!match->P1)
         return NULL;
@@ -164,14 +185,15 @@ void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
     return;
 }
 
-void destroyList(PROJECTILE* list){
+void destroyList(PROJECTILE** list){
     PROJECTILE* aux;
 
-    while(list){
-        aux = list->next;
-        free(list);
-        list = aux;
+    while(*list){
+        aux = (*list)->next;
+        free(*list);
+        *list = aux;
     }
+    list = NULL;
     return;
 }
 
@@ -183,6 +205,10 @@ void destroyMatch(MATCH* match){
     fclose(match->map.map);
     fclose(match->map.soundMap);
     */
+    //al_destroy_sample(match->music);
+    for(int i = 1; i <= IMAGE_NUM; i++)
+        al_destroy_bitmap(match->map.map[i]);
+    al_destroy_audio_stream(match->map.music);
     free(match);
 }
 
@@ -193,7 +219,7 @@ void destroyPlayer(PLAYER* player){
     */
     //free(player->keys);
     free(player->stick);
-    destroyList(player->projs);
+    destroyList(&player->projs);
     al_destroy_timer(player->cooldownAttack);
     al_destroy_timer(player->cooldownProj);
     al_destroy_timer(player->attackDuration);

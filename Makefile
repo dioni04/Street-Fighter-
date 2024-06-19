@@ -1,6 +1,6 @@
 CC = gcc
-COMP_FLAGS = -Wall $(shell pkg-config --cflags allegro-5 allegro_font-5 allegro_primitives-5)
-LINK_FLAGS = $(shell pkg-config --libs allegro-5 allegro_font-5 allegro_primitives-5)
+COMP_FLAGS = -Wall $(shell pkg-config --cflags allegro-5 allegro_font-5 allegro_primitives-5 allegro_audio-5 allegro_acodec-5 allegro_image-5 allegro_ttf-5)
+LINK_FLAGS = $(shell pkg-config --libs allegro-5 allegro_font-5 allegro_primitives-5 allegro_audio-5 allegro_acodec-5 allegro_image-5 allegro_ttf-5)
 PROG_NAME = street
 
 all: main characters control movement street.h

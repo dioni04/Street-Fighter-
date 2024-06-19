@@ -1,9 +1,16 @@
 #include "street.h"
+#include <allegro5/allegro_font.h>
 
 int main(){
     al_init();
     al_init_primitives_addon();
+    al_init_font_addon();
+    al_init_ttf_addon();
     al_install_keyboard();
+    al_install_audio();
+    al_init_acodec_addon();
+    al_init_image_addon();
+    al_reserve_samples(16);
 
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / FPS);
     if(!timer)
@@ -15,7 +22,7 @@ int main(){
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     if(!queue)
         return 1;
-    ALLEGRO_FONT* font = al_create_builtin_font();
+    ALLEGRO_FONT* font = al_load_ttf_font("fonts/KnightVision-p7Ezy.ttf", 20, 0);
     if(!font)
         return 1;
     ALLEGRO_DISPLAY* disp = al_create_display(MAX_X, MAX_Y);
@@ -101,9 +108,14 @@ int main(){
             checkHitAttack(player2, player1);
 
             al_clear_to_color(al_map_rgb(0,0,0));//black
+            for(int i = 1; i <= IMAGE_NUM; i++)
+                al_draw_bitmap(match->map.map[i],0,0, 0);
+
+            al_draw_filled_rectangle(player1->x - player1->length / 2, player1->y - player1->height / 2,player1->x + player1->length / 2, player1->y + player1->height / 2,al_map_rgb(0,0,255));
+            al_draw_filled_rectangle(player2->x - player2->length / 2, player2->y - player2->height / 2,player2->x + player2->length / 2, player2->y + player2->height / 2,al_map_rgb(255,0,0));
 
             snprintf(counterStr, sizeof(counterStr), "%d",match->time);
-            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL / 4, ALLEGRO_ALIGN_CENTER, counterStr);
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL / 8, ALLEGRO_ALIGN_CENTER, counterStr);
 
             //PROJETEIS
             if(player1->projs){
@@ -122,16 +134,18 @@ int main(){
             }
 
             //VIDAS DOS JOGADORES
+
             if(player1->health > 0)
-                al_draw_filled_rectangle((MAX_X * 0.45)*(1 - player1->health*0.01),0, MAX_X*0.45, HEADER_LEVEL / 2,al_map_rgb(255, 255, 255)); //VIDA P1
+                al_draw_filled_rectangle((MAX_X * 0.454)*(1.0275 - player1->health*0.01),0, MAX_X*0.454, HEADER_LEVEL / 2,al_map_rgb(255, 0, 0)); //VIDA P1
             else{
                 player2->rounds++;
                 roundEnd(disp, font, match, player2, NULL, queue, event);
                 if(player2->rounds == 2)
                     break;
             }
+
             if(player2->health > 0)
-                al_draw_filled_rectangle(MAX_X*0.55, 0 ,(MAX_X) - ((1 - player2->health * 0.01) * MAX_X * 0.45), HEADER_LEVEL / 2, al_map_rgb(255, 255, 255)); //VIDA P2
+                al_draw_filled_rectangle(MAX_X*0.5475, 0 ,(MAX_X * 0.989) - ((1 - player2->health * 0.01) * MAX_X * 0.45), HEADER_LEVEL / 2, al_map_rgb(255, 0, 0)); //VIDA P2
             else{
                 player1->rounds++;
                 roundEnd(disp, font, match, player1, NULL, queue, event);
@@ -167,14 +181,17 @@ int main(){
             staminaRegen(player2);
 
             if(player1->stamina > 0)
-                al_draw_filled_rectangle((MAX_X * 0.25)*(1 - player1->stamina*0.01),HEADER_LEVEL * 0.75, MAX_X*0.25, HEADER_LEVEL,al_map_rgb(255, 0, 255)); //Stamina P1
+                al_draw_filled_rectangle((MAX_X * 0.25)*(1.06 - player1->stamina*0.01),HEADER_LEVEL * 0.75, MAX_X*0.31, HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P1
 
             if(player2->stamina > 0)
-                al_draw_filled_rectangle(MAX_X*0.75, HEADER_LEVEL * 0.75,(MAX_X) - ((1 - player2->stamina * 0.01) * MAX_X * 0.25) ,HEADER_LEVEL,al_map_rgb(255, 0, 255)); //Stamina P2
+                al_draw_filled_rectangle(MAX_X*0.695, HEADER_LEVEL * 0.75,(MAX_X * 0.989) - ((1 - player2->stamina * 0.01) * MAX_X * 0.25) ,HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P2
 
-            al_draw_filled_rectangle(player1->x - player1->length / 2, player1->y - player1->height / 2,player1->x + player1->length / 2, player1->y + player1->height / 2,al_map_rgb(0,0,255));
-            al_draw_filled_rectangle(player2->x - player2->length / 2, player2->y - player2->height / 2,player2->x + player2->length / 2, player2->y + player2->height / 2,al_map_rgb(255,0,0));
-            al_draw_filled_rectangle(0, GROUND_LEVEL, MAX_X, MAX_Y,al_map_rgb(255, 255, 255));
+            al_draw_bitmap(match->ui.healthBar,-5, 0, 0);
+            al_draw_bitmap(match->ui.healthBar,MAX_X * 0.525, 0, 0);
+            //BARRAS DE STAMINA
+            al_draw_bitmap(match->ui.staminaBar,0, HEADER_LEVEL* 0.75, 0);
+            al_draw_bitmap(match->ui.staminaBar,MAX_X * 0.68, HEADER_LEVEL* 0.75, 0);
+            //al_draw_filled_rectangle(0, GROUND_LEVEL, MAX_X, MAX_Y,al_map_rgb(255, 255, 255));
 
             al_flip_display();
         }
