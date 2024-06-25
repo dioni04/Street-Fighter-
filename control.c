@@ -137,3 +137,30 @@ void gaugeGain(PLAYER* player, short id){
     player->gauge = (player->gauge > MAX_GAUGE) ? MAX_GAUGE : player->stamina; //Limite superior
     return;
 }
+
+void animationSelect(PLAYER* player){
+    if(player->state == stand){
+
+    }
+    else if(player->state == walkF){
+
+    }
+    else if(player->state == walkF){
+
+    }
+    else if(player->state == walkB){
+
+    }
+    else if(player->state == jump){
+
+    }
+    else if(player->state == jumpB){
+
+    }
+    else if(player->state == jumpF){
+
+    }
+    else if(player->state == crouch){
+
+    }
+}

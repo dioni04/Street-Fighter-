@@ -22,7 +22,7 @@ int main(){
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     if(!queue)
         return 1;
-    ALLEGRO_FONT* font = al_load_ttf_font("fonts/KnightVision-p7Ezy.ttf", 20, 0);
+    ALLEGRO_FONT* font = al_load_ttf_font("./fonts/KnightVision-p7Ezy.ttf", 20, 0);
     if(!font)
         return 1;
     ALLEGRO_DISPLAY* disp = al_create_display(MAX_X, MAX_Y);

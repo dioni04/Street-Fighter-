@@ -13,7 +13,7 @@ MATCH* createMatch(){
     //must_init(match->music, "last_v8.mod");
     //al_play_sample( match->music, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
     //match->music =
-    match->map.music = al_load_audio_stream("/home/dioni/UFPR/2024.1/prog2/Street-Fighter-/last_v8.mod", 4, 2048);
+    match->map.music = al_load_audio_stream("./last_v8.mod", 4, 2048);
     al_set_audio_stream_playing(match->map.music, true);
     al_set_audio_stream_gain(match->map.music, 1.0);
 
