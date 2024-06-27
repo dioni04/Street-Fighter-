@@ -1,5 +1,7 @@
 #include "street.h"
 #include <allegro5/allegro_font.h>
+#include <allegro5/bitmap.h>
+#include <allegro5/timer.h>
 
 int main(){
     al_init();
@@ -18,7 +20,9 @@ int main(){
     ALLEGRO_TIMER* seconds = al_create_timer(1.0);
     if(!seconds)
         return 1;
-
+    ALLEGRO_TIMER* thirdSecond = al_create_timer(1/3.0);
+    if(!thirdSecond)
+        return 1;
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     if(!queue)
         return 1;
@@ -33,11 +37,13 @@ int main(){
     al_register_event_source(queue, al_get_display_event_source(disp));
     al_register_event_source(queue, al_get_timer_event_source(timer));
     al_register_event_source(queue, al_get_timer_event_source(seconds));
+    al_register_event_source(queue, al_get_timer_event_source(thirdSecond));
 
     ALLEGRO_EVENT event;
 
     al_start_timer(timer);
     al_start_timer(seconds);
+    al_start_timer(thirdSecond);
 
     MATCH* match;
     PLAYER* player1;
@@ -59,7 +65,7 @@ int main(){
     al_register_event_source(queue, al_get_timer_event_source(player2->attackDuration));
     al_register_event_source(queue, al_get_timer_event_source(player1->damageState));
     al_register_event_source(queue, al_get_timer_event_source(player2->damageState));
-    bool redraw = true;
+    bool redraw = false;
 
     while(1){
         char counterStr[10];
@@ -74,7 +80,8 @@ int main(){
             //COOLDOWNS
             cooldowns(event, player1);
             cooldowns(event, player2);
-
+            animationSelect(player1);
+            animationSelect(player2);
             if(event.timer.source == seconds){
                 //Timer a todo segundo
                 match->time--;
@@ -97,9 +104,14 @@ int main(){
                     }
                 }
             }
+            else if(event.timer.source == thirdSecond){
+                player1->fighter.currentFrame = (player1->fighter.currentFrame + 1) % player1->fighter.size;//proximo frame
+                player2->fighter.currentFrame = (player2->fighter.currentFrame + 1) % player2->fighter.size;//proximo frame
+            }
         }
         if(redraw && al_is_event_queue_empty(queue)){ //Novo Frame
             redraw = false;
+            //CHECKS DE MOVEMENTO E ATA
             movePlayer(match, player1, player2);
             movePlayer(match, player2, player1);
             moveProjectile(player1, player2);
@@ -108,12 +120,61 @@ int main(){
             checkHitAttack(player2, player1);
 
             al_clear_to_color(al_map_rgb(0,0,0));//black
-            for(int i = 1; i <= IMAGE_NUM; i++)
-                al_draw_bitmap(match->map.map[i],0,0, 0);
+            //MAPA
+            for(int i = 0; i < IMAGE_NUM; i++)
+                al_draw_scaled_bitmap(match->map.map[i],0,0,
+                                      al_get_bitmap_width(match->map.map[i]),
+                                      al_get_bitmap_height(match->map.map[i]),
+                                      0,0,
+                                      al_get_bitmap_width(match->map.map[i]) * 2,
+                                      al_get_bitmap_height(match->map.map[i]) * 2 ,
+                                      0);
 
+            //SPRITES
+            if(AT_LEFT(player1->x, player2->x)){
+                al_draw_scaled_bitmap(player1->fighter.sprite[player1->fighter.currentFrame],
+                                      0,0,
+                                      al_get_bitmap_width(player1->fighter.sprite[player1->fighter.currentFrame]),
+                                      al_get_bitmap_height(player1->fighter.sprite[player1->fighter.currentFrame]),
+                                      player1->x - player1->length * 2, player1->y - player1->height,
+                                      al_get_bitmap_width(player1->fighter.sprite[player1->fighter.currentFrame]) * 2.5,
+                                      al_get_bitmap_height(player1->fighter.sprite[player1->fighter.currentFrame]) * 2.5,
+                                      0);
+                al_draw_scaled_bitmap(player2->fighter.sprite[player2->fighter.currentFrame],
+                                      0,0,
+                                      al_get_bitmap_width(player2->fighter.sprite[player2->fighter.currentFrame]),
+                                      al_get_bitmap_height(player2->fighter.sprite[player2->fighter.currentFrame]),
+                                      player2->x - player2->length * 2, player2->y - player2->height,
+                                      al_get_bitmap_width(player2->fighter.sprite[player2->fighter.currentFrame]) * 2.5,
+                                      al_get_bitmap_height(player2->fighter.sprite[player2->fighter.currentFrame]) * 2.5,
+                                      ALLEGRO_FLIP_HORIZONTAL);
+                // al_draw_bitmap(player2->fighter.sprite[player2->fighter.currentFrame],player2->x - player2->length / 2, player2->y - player2->height / 2 , ALLEGRO_FLIP_HORIZONTAL);
+            }
+            else{
+                al_draw_scaled_bitmap(player1->fighter.sprite[player1->fighter.currentFrame],
+                                      0,0,
+                                      al_get_bitmap_width(player1->fighter.sprite[player1->fighter.currentFrame]),
+                                      al_get_bitmap_height(player1->fighter.sprite[player1->fighter.currentFrame]),
+                                      player1->x - player1->length * 2, player1->y - player1->height,
+                                      al_get_bitmap_width(player1->fighter.sprite[player1->fighter.currentFrame]) * 2.5,
+                                      al_get_bitmap_height(player1->fighter.sprite[player1->fighter.currentFrame]) * 2.5,
+                                      ALLEGRO_FLIP_HORIZONTAL);
+                // al_draw_bitmap(player1->fighter.sprite[player1->fighter.currentFrame],player1->x - player1->length / 2, player1->y - player1->height / 2 , ALLEGRO_FLIP_HORIZONTAL);
+                // al_draw_bitmap(player2->fighter.sprite[player2->fighter.currentFrame],player2->x - player2->length / 2, player2->y - player2->height / 2 , 0);
+                al_draw_scaled_bitmap(player2->fighter.sprite[player2->fighter.currentFrame],
+                                      0,0,
+                                      al_get_bitmap_width(player2->fighter.sprite[player2->fighter.currentFrame]),
+                                      al_get_bitmap_height(player2->fighter.sprite[player2->fighter.currentFrame]),
+                                      player2->x - player2->length *2 , player2->y - player2->height,
+                                      al_get_bitmap_width(player2->fighter.sprite[player2->fighter.currentFrame]) * 2.5,
+                                      al_get_bitmap_height(player2->fighter.sprite[player2->fighter.currentFrame]) * 2.5,
+                                      0);
+            }
+
+            /*
             al_draw_filled_rectangle(player1->x - player1->length / 2, player1->y - player1->height / 2,player1->x + player1->length / 2, player1->y + player1->height / 2,al_map_rgb(0,0,255));
             al_draw_filled_rectangle(player2->x - player2->length / 2, player2->y - player2->height / 2,player2->x + player2->length / 2, player2->y + player2->height / 2,al_map_rgb(255,0,0));
-
+            */
             snprintf(counterStr, sizeof(counterStr), "%d",match->time);
             al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL / 8, ALLEGRO_ALIGN_CENTER, counterStr);
 

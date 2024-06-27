@@ -1,5 +1,8 @@
 #include "street.h"
+#include <allegro5/bitmap.h>
 #include <allegro5/bitmap_io.h>
+#include <stdbool.h>
+#include <time.h>
 
 //Cria Partida
 MATCH* createMatch(){
@@ -13,13 +16,15 @@ MATCH* createMatch(){
     //must_init(match->music, "last_v8.mod");
     //al_play_sample( match->music, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
     //match->music =
+
+    /*
     match->map.music = al_load_audio_stream("./last_v8.mod", 4, 2048);
     al_set_audio_stream_playing(match->map.music, true);
     al_set_audio_stream_gain(match->map.music, 1.0);
-
+    */
     match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * IMAGE_NUM);
-    for(int i = 1; i <= IMAGE_NUM; i++){
-        char c = i + '0'; //numero de i em char
+    for(int i = 0; i < IMAGE_NUM; i++){
+        char c = i + 1 + '0'; //numero de i+1 em char
         char location[25] = "images/map/forest/*.png";
         location[18] = c;
         match->map.map[i] = al_load_bitmap(location);
@@ -79,6 +84,9 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
     player->stick = createJoystick();
     player->projs = NULL;
     player->attacks = NULL;
+    player->fighter.newFlag = true;
+    player->fighter.id = monk;//temp
+    player->fighter.size = 0;
 
     //TIMERS COOLDOWN
     player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
@@ -99,6 +107,20 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
         return NULL;
     }
     return player;
+}
+
+ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder){
+    ALLEGRO_BITMAP** sprites = NULL;
+    player->fighter.size = countFilesFolder(folder);
+    player->fighter.currentFrame = 0;
+    player->fighter.newFlag = false;
+    printf("%d\n", player->fighter.size);
+    if(player->fighter.size <= 0)
+        return NULL;
+    sprites = (ALLEGRO_BITMAP**)malloc(sizeof(ALLEGRO_BITMAP*)* player->fighter.size);
+    if(!sprites)
+        return NULL;
+    return sprites;
 }
 
 JOYSTICK* createJoystick(){
@@ -206,7 +228,7 @@ void destroyMatch(MATCH* match){
     fclose(match->map.soundMap);
     */
     //al_destroy_sample(match->music);
-    for(int i = 1; i <= IMAGE_NUM; i++)
+    for(int i = 0; i < IMAGE_NUM; i++)
         al_destroy_bitmap(match->map.map[i]);
     al_destroy_audio_stream(match->map.music);
     free(match);

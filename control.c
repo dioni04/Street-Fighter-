@@ -1,5 +1,25 @@
 #include "street.h"
+#include <allegro5/bitmap_io.h>
+#include <stdbool.h>
+#include <string.h>
 #include <time.h>
+
+int countFilesFolder(char* path){
+
+    int counter = 0;
+    struct dirent *entry;
+    DIR *dp = opendir(path);
+
+    if (dp == NULL) {
+        perror("opendir");
+        return -1;
+    }
+    while ((entry = readdir(dp)))
+        if (entry->d_type == DT_REG)
+            counter++;
+    closedir(dp);
+    return counter;
+}
 
 void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event){
     while(1){
@@ -138,29 +158,63 @@ void gaugeGain(PLAYER* player, short id){
     return;
 }
 
+//Seleciona qual animacoes vao ser feitas
 void animationSelect(PLAYER* player){
+    char path[1024];
+    char* ch;
+    int i;
+
+    if(!player->fighter.newFlag){
+
+        return;
+    }
+
+    if(player->fighter.sprite){
+        for(i = 0; i < player->fighter.size; i++)
+            al_destroy_bitmap(player->fighter.sprite[i]);
+        free(player->fighter.sprite);
+    }
+
+    if(player->fighter.id == monk)
+        strcpy(path,"images/fighters/monk/");
+    else if(player->fighter.id == cleric)
+        strcpy(path, "images/fighters/cleric/");
+
+    //path para diretorio
     if(player->state == stand){
-
+        if(!player->attacks)
+            strcat(path,"idle/");
+        else if(player->attacks->id == punch)
+            strcat(path,"punch/");
+        else if(player->attacks->id == kick)
+            strcat(path,"kick/");
     }
-    else if(player->state == walkF){
-
-    }
-    else if(player->state == walkF){
-
-    }
-    else if(player->state == walkB){
-
-    }
-    else if(player->state == jump){
-
-    }
-    else if(player->state == jumpB){
-
-    }
-    else if(player->state == jumpF){
-
-    }
+    else if(player->state == walkF || player->state == walkB)
+        strcat(path,"walk/");
+    else if(player->state == jump || player->state == jumpB || player->state == jumpF)
+        if(!player->attacks)
+            strcat(path,"jump/");
+        else
+            strcat(path,"jumpAttack/");
     else if(player->state == crouch){
-
+        if(!player->attacks)
+            strcat(path,"crouch/");
+        else
+            strcat(path,"crouchAttack/");
     }
+
+
+    //cria vetor de bitmaps
+    player->fighter.sprite = createSprites(player, path);
+    if(!player->fighter.sprite)
+        return;
+    strcat(path,"*.png");
+    ch = strchr(path, '*');
+    for(i = 0; i < player->fighter.size; i++){
+        char c = i + 1 + '0'; //numero de i+1 em char
+        *ch = c;
+        printf("%s\n", path);
+        player->fighter.sprite[i] = al_load_bitmap(path);
+    }
+    return;
 }

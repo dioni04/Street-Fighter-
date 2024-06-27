@@ -15,11 +15,13 @@
 #include <allegro5/display.h>
 #include <allegro5/events.h>
 #include <allegro5/allegro_image.h>
+#include <dirent.h>
 
 enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
 enum action{attack, hit, projectile};
 enum attackType{punch, kick};
+enum charID{monk, cleric};
 
 #define MAX_X 544.0
 #define MAX_Y 320.0
@@ -77,8 +79,12 @@ struct gameData{
 };
 
 struct character{
-    FILE* model;
-    FILE* sounds;
+    short id;
+    int size;
+    bool newFlag;
+    short currentFrame;
+    ALLEGRO_BITMAP** sprite;
+    ALLEGRO_SAMPLE* sounds;
 };
 
 struct mapData{
@@ -172,11 +178,14 @@ typedef struct game{
     MATCH* match;
 }GAME;
 
+int countFilesFolder(char* folder_path);
+
 MATCH* createMatch();
 PLAYER* createPlayer(MATCH* match,float x, float y);
 JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
 ATTACK* createAttack(PLAYER* player, short id, short direction);
+ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder);
 
 void destroyList(PROJECTILE** list);
 void destroyPlayer(PLAYER* player);
@@ -213,5 +222,6 @@ void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event);
 
 void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2);
 void cooldowns(ALLEGRO_EVENT event, PLAYER* player);
+void animationSelect(PLAYER* player);
 
 #endif
