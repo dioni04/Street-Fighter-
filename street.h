@@ -21,7 +21,7 @@ enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
 enum action{attack, hit, projectile};
 enum attackType{punch, kick};
-enum charID{monk, cleric};
+enum charID{monk, cleric, brawler};
 
 #define MAX_X 544.0
 #define MAX_Y 320.0
@@ -51,10 +51,10 @@ enum charID{monk, cleric};
 #define PROJ_SIZE (MAX_X*0.05)
 
 #define DAMAGE_DURATION 0.1
-#define ATTACK_DURATION 0.15
+#define ATTACK_DURATION 0.45
 
 #define PROJ_COOLDOWN 1
-#define ATTACK_COOLDOWN 0.25
+#define ATTACK_COOLDOWN 0.4
 
 #define STAMINA_REGEN 1
 #define PROJ_COST 25
@@ -64,6 +64,9 @@ enum charID{monk, cleric};
 #define ATTACK_GAUGE_GAIN 5
 #define DAMAGE_GAUGE_GAIN 3
 #define PROJECTILE_GAUGE_GAIN 4
+
+#define ATTACK_FRAME_DURATION 1/12.0
+#define MOV_FRAME_DURATION 1/3.0
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
@@ -78,14 +81,7 @@ struct gameData{
     FILE** mapSounds;
 };
 
-struct character{
-    short id;
-    int size;
-    bool newFlag;
-    short currentFrame;
-    ALLEGRO_BITMAP** sprite;
-    ALLEGRO_SAMPLE* sounds;
-};
+
 
 struct mapData{
     ALLEGRO_BITMAP** map;
@@ -122,6 +118,17 @@ typedef struct joystick{
     bool special;
     bool shoot;
 }JOYSTICK;
+
+struct character{
+    short id;
+    int size;
+    bool newFlag;
+    short currentFrame;
+    ALLEGRO_BITMAP** sprite;
+    ALLEGRO_SAMPLE* sounds;
+    ALLEGRO_TIMER* frameMovement;
+    ALLEGRO_TIMER* frameAttack;
+};
 
 typedef struct player{
     struct character fighter;
@@ -181,7 +188,7 @@ typedef struct game{
 int countFilesFolder(char* folder_path);
 
 MATCH* createMatch();
-PLAYER* createPlayer(MATCH* match,float x, float y);
+PLAYER* createPlayer(MATCH* match,float x, float y, short id);
 JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
 ATTACK* createAttack(PLAYER* player, short id, short direction);

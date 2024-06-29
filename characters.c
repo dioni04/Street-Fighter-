@@ -1,8 +1,4 @@
 #include "street.h"
-#include <allegro5/bitmap.h>
-#include <allegro5/bitmap_io.h>
-#include <stdbool.h>
-#include <time.h>
 
 //Cria Partida
 MATCH* createMatch(){
@@ -31,18 +27,21 @@ MATCH* createMatch(){
     }
 
     match->ui.staminaBar = al_load_bitmap("images/ui/stamina.png");
+    if(!match->ui.staminaBar)
+        printf("Stamina Error");
     match->ui.healthBar = al_load_bitmap("images/ui/health.png");
+    if(!match->ui.healthBar)
+        printf("Health Error");
     if(!match->map.map)
         return NULL;
-    match->P1 = createPlayer(match ,MAX_X/4.0, GROUND_LEVEL - BASE_HEIGHT / 2);
+    match->P1 = createPlayer(match ,MAX_X/4.0, GROUND_LEVEL - BASE_HEIGHT / 2, monk);
     if(!match->P1)
         return NULL;
 
-    match->P2 = createPlayer(match, MAX_X - MAX_X / 4.0, GROUND_LEVEL - BASE_HEIGHT / 2);
+    match->P2 = createPlayer(match, MAX_X - MAX_X / 4.0, GROUND_LEVEL - BASE_HEIGHT / 2, brawler);
     if(!match->P2)
         return NULL;
 
-    //FALTA MAPA
     match->dmgMult = 1.0;
     match->gravMult = 1.0;
     match->healthMult = 1.0;
@@ -55,7 +54,7 @@ MATCH* createMatch(){
 }
 
 // Cria o personagem se for valido sua posicao
-PLAYER* createPlayer(MATCH* match, float x, float y){
+PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     PLAYER* player = NULL;
 
     if(x > MAX_X || y > MAX_Y || x + BASE_LENGTH / 2 > MAX_X || x - BASE_LENGTH / 2 < 0 || y + BASE_HEIGHT / 2 > MAX_Y || y - BASE_HEIGHT / 2 < 0)
@@ -85,8 +84,9 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
     player->projs = NULL;
     player->attacks = NULL;
     player->fighter.newFlag = true;
-    player->fighter.id = monk;//temp
+    player->fighter.id = id;//temp
     player->fighter.size = 0;
+    player->fighter.sprite = NULL;
 
     //TIMERS COOLDOWN
     player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
@@ -100,6 +100,12 @@ PLAYER* createPlayer(MATCH* match, float x, float y){
         return NULL;
     player->damageState = al_create_timer(DAMAGE_DURATION);
     if(!player->damageState)
+        return NULL;
+    player->fighter.frameMovement = al_create_timer(MOV_FRAME_DURATION);
+    if(!player->fighter.frameMovement)
+        return NULL;
+    player->fighter.frameAttack = al_create_timer(ATTACK_FRAME_DURATION);
+    if(!player->fighter.frameAttack)
         return NULL;
     //JOYSTICK
     if(!player->stick){
@@ -141,11 +147,7 @@ JOYSTICK* createJoystick(){
     return stick;
 }
 
-void destroyAttack(PLAYER* player){
-    free(player->attacks);
-    player->attacks = NULL;
-    return;
-}
+
 
 ATTACK* createAttack(PLAYER* player, short id, short direction){
     ATTACK* attack = NULL;
@@ -207,6 +209,12 @@ void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
     return;
 }
 
+void destroyAttack(PLAYER* player){
+    free(player->attacks);
+    player->attacks = NULL;
+    return;
+}
+
 void destroyList(PROJECTILE** list){
     PROJECTILE* aux;
 
@@ -230,22 +238,19 @@ void destroyMatch(MATCH* match){
     //al_destroy_sample(match->music);
     for(int i = 0; i < IMAGE_NUM; i++)
         al_destroy_bitmap(match->map.map[i]);
-    al_destroy_audio_stream(match->map.music);
+    // al_destroy_audio_stream(match->map.music);
     free(match);
 }
 
 void destroyPlayer(PLAYER* player){
-    /*
-    fclose(player->fighter.model);
-    fclose(player->fighter.sounds);
-    */
-    //free(player->keys);
     free(player->stick);
     destroyList(&player->projs);
     al_destroy_timer(player->cooldownAttack);
     al_destroy_timer(player->cooldownProj);
     al_destroy_timer(player->attackDuration);
     al_destroy_timer(player->damageState);
+    al_destroy_timer(player->fighter.frameAttack);
+    al_destroy_timer(player->fighter.frameMovement);
     free(player);
     return;
 }
@@ -261,6 +266,7 @@ void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
         attacker->stamina -= PUNCH_COST;
     else
         attacker->stamina -= KICK_COST;
+    attacker->fighter.newFlag = true;
     return;
 }
 

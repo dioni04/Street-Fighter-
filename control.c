@@ -1,8 +1,6 @@
 #include "street.h"
-#include <allegro5/bitmap_io.h>
+#include <allegro5/timer.h>
 #include <stdbool.h>
-#include <string.h>
-#include <time.h>
 
 int countFilesFolder(char* path){
 
@@ -36,6 +34,8 @@ void resetPlayer(PLAYER* player){
     player->state = stand;
     player->directionX = none;
     player->directionY = none;
+    player->fighter.newFlag = true;
+    destroyAttack(player);
     al_stop_timer(player->cooldownAttack);
     al_stop_timer(player->cooldownProj);
     al_stop_timer(player->damageState);
@@ -127,16 +127,21 @@ void checkHitAttack(PLAYER* attacker, PLAYER* victim){
 
 //Cooldowns do personagem
 void cooldowns(ALLEGRO_EVENT event, PLAYER* player){
-    if(event.timer.source == player->cooldownAttack)
+    if(event.timer.source == player->cooldownAttack){
         al_stop_timer(player->cooldownAttack);
-    if(event.timer.source == player->cooldownProj)
+    }
+    if(event.timer.source == player->cooldownProj){
         al_stop_timer(player->cooldownProj);
+    }
     if(event.timer.source == player->attackDuration){
         al_stop_timer(player->attackDuration);
         destroyAttack(player);
+        player->fighter.newFlag = true;
     }
-    if(event.timer.source == player->damageState)
+    if(event.timer.source == player->damageState){
         al_stop_timer(player->damageState);
+        player->fighter.newFlag = true;
+    }
     return;
 }
 
@@ -163,46 +168,68 @@ void animationSelect(PLAYER* player){
     char path[1024];
     char* ch;
     int i;
+    bool attack = false;
 
-    if(!player->fighter.newFlag){
-
+    if(!player->fighter.newFlag)
         return;
-    }
 
     if(player->fighter.sprite){
         for(i = 0; i < player->fighter.size; i++)
             al_destroy_bitmap(player->fighter.sprite[i]);
         free(player->fighter.sprite);
+        player->fighter.sprite = NULL;
     }
 
+    //Seleciona fighter
     if(player->fighter.id == monk)
         strcpy(path,"images/fighters/monk/");
     else if(player->fighter.id == cleric)
         strcpy(path, "images/fighters/cleric/");
+    else if(player->fighter.id == brawler)
+        strcpy(path, "images/fighters/brawler/");
 
-    //path para diretorio
+    //Path para diretorio
     if(player->state == stand){
         if(!player->attacks)
             strcat(path,"idle/");
-        else if(player->attacks->id == punch)
+        else if(player->attacks->id == punch){
             strcat(path,"punch/");
-        else if(player->attacks->id == kick)
+            attack = true;
+        }
+        else if(player->attacks->id == kick){
             strcat(path,"kick/");
+            attack = true;
+        }
     }
     else if(player->state == walkF || player->state == walkB)
         strcat(path,"walk/");
     else if(player->state == jump || player->state == jumpB || player->state == jumpF)
         if(!player->attacks)
             strcat(path,"jump/");
-        else
+        else{
             strcat(path,"jumpAttack/");
+            attack = true;
+        }
     else if(player->state == crouch){
         if(!player->attacks)
             strcat(path,"crouch/");
-        else
+        else{
             strcat(path,"crouchAttack/");
+            attack = true;
+        }
     }
 
+    //Para timers de frames de ataques e movimentos dependendo da acao atual
+    if(attack){
+        al_stop_timer(player->fighter.frameMovement);
+        if(!al_get_timer_started(player->fighter.frameAttack))
+            al_start_timer(player->fighter.frameAttack);
+    }
+    else{
+        al_stop_timer(player->fighter.frameAttack);
+        if(!al_get_timer_started(player->fighter.frameMovement))
+            al_start_timer(player->fighter.frameMovement);
+    }
 
     //cria vetor de bitmaps
     player->fighter.sprite = createSprites(player, path);
@@ -212,7 +239,7 @@ void animationSelect(PLAYER* player){
     ch = strchr(path, '*');
     for(i = 0; i < player->fighter.size; i++){
         char c = i + 1 + '0'; //numero de i+1 em char
-        *ch = c;
+        *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
         printf("%s\n", path);
         player->fighter.sprite[i] = al_load_bitmap(path);
     }

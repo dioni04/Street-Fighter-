@@ -9,14 +9,17 @@ void moveUp(PLAYER* player){
         if(player->state == stand){
             player->state = jump;
             player->directionY = up;
+            player->fighter.newFlag = true;
         }
         else if(player->state == walkB){
             player->state = jumpB;
             player->directionY = up;
+            player->fighter.newFlag = true;
         }
         else if(player->state == walkF){
             player->state = jumpF;
             player->directionY = up;
+            player->fighter.newFlag = true;
         }
     }
     return;
@@ -31,6 +34,7 @@ void moveDown(PLAYER* player, PLAYER* player2){
         if(player->state == stand || player->state == walkB || player->state == walkF){
             player->state = crouch;
             player->directionX = none;
+            player->fighter.newFlag = true;
         }
     }
     else if(!player->stick->down && player->state == crouch){
@@ -40,6 +44,7 @@ void moveDown(PLAYER* player, PLAYER* player2){
             else
                 player->state = walkF;
             player->directionX = left;
+            player->fighter.newFlag = true;
             return;
         }
         if(player->stick->right){
@@ -48,10 +53,11 @@ void moveDown(PLAYER* player, PLAYER* player2){
             else
                 player->state = walkF;
             player->directionX = right;
+            player->fighter.newFlag = true;
             return;
         }
         player->state = stand;
-
+        player->fighter.newFlag = true;
     }
 
     return;
@@ -68,16 +74,19 @@ void moveLeft(PLAYER* player1, PLAYER* player2){
         else
             player1->state = walkF;
         player1->directionX = left;
+        player1->fighter.newFlag = true;
     }
     //se pressionar enquanto anda na outra direcao
     else if(player1->stick->left && player1->directionX == right && (player1->state == walkB || player1->state == walkF)){
         player1->state = stand;
         player1->directionX = none;
+        player1->fighter.newFlag = true;
     }
     //Se soltar e estar andando para esquerda para de andar
     else if(!player1->stick->left && (player1->state == walkB || player1->state == walkF) && !player1->stick->right){
         player1->state = stand;
         player1->directionX = none;
+        player1->fighter.newFlag = true;
     }
     //se tiver as duas direcoes apertadas e soltar uma
     else if(player1->stick->right && player1->directionY == none){
@@ -86,6 +95,7 @@ void moveLeft(PLAYER* player1, PLAYER* player2){
             player1->state = walkB;
         else
             player1->state = walkF;
+        player1->fighter.newFlag = true;
     }
 
     return;
@@ -102,16 +112,19 @@ void moveRight(PLAYER* player1, PLAYER* player2){
         else
             player1->state = walkF;
         player1->directionX = right;
+        player1->fighter.newFlag = true;
     }
     //Se pressionar enquanto anda na outra direcao
     else if(player1->stick->right && player1->directionX == left && (player1->state == walkB || player1->state == walkF)){
         player1->state = stand;
         player1->directionX = none;
+        player1->fighter.newFlag = true;
     }
      //Se soltar e estar andando para esquerda para de andar
     else if(!player1->stick->right && (player1->state == walkB || player1->state == walkF) && !player1->stick->left){
         player1->state = stand;
         player1->directionX = none;
+        player1->fighter.newFlag = true;
     }
         //se tiver as duas direcoes apertadas e soltar uma
     else if(player1->stick->left && player1->directionY == none){
@@ -120,6 +133,7 @@ void moveRight(PLAYER* player1, PLAYER* player2){
             player1->state = walkB;
         else
             player1->state = walkF;
+        player1->fighter.newFlag = true;
     }
 
     return;
@@ -207,6 +221,7 @@ void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
                     player1->state = walkB;
                 else
                     player1->state = walkF;
+                player1->fighter.newFlag = true;
                 return;
             }
             else if(player1->stick->left){
@@ -214,9 +229,11 @@ void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
                     player1->state = walkB;
                 else
                     player1->state = walkF;
+                player1->fighter.newFlag = true;
                 return;
             }
             player1->state = stand;
+            player1->fighter.newFlag = true;
         }
     }
     return;
