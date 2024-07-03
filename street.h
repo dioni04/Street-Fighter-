@@ -15,6 +15,7 @@
 #include <allegro5/display.h>
 #include <allegro5/events.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/mouse.h>
 #include <dirent.h>
 
 enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
@@ -67,11 +68,10 @@ enum charID{monk, cleric, brawler};
 
 #define ATTACK_FRAME_DURATION 1/12.0
 #define MOV_FRAME_DURATION 1/3.0
+#define GLOBAL_FRAME_TIME 1/20.0 //frame para animacoes de projeteis
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
-
-#define IMAGE_NUM 4
 
 //Vetores com os assets do jogo
 struct gameData{
@@ -102,8 +102,9 @@ typedef struct projectile{
     float x;
     float y;
     float side;//Tamanho
-    short direction;
     float speed;
+    short direction;
+    short currentFrame;
     unsigned int dmg;
     struct projectile* next;
 }PROJECTILE;
@@ -148,11 +149,13 @@ typedef struct player{
     short health;
     short poise;
     short stamina;
+    int sizeSprites;
     unsigned short gauge;
     ALLEGRO_TIMER* cooldownProj;
     ALLEGRO_TIMER* cooldownAttack;
     ALLEGRO_TIMER* attackDuration;
     ALLEGRO_TIMER* damageState;
+    ALLEGRO_BITMAP** spritesProjs;
 }PLAYER;
 
 struct uiData{
@@ -173,6 +176,7 @@ typedef struct match{
     float healthMult;
     float staminaMult;
 
+    ALLEGRO_TIMER_EVENT* frameTime;
     struct uiData ui;
     struct mapData map;
     struct player* P1;
@@ -185,6 +189,7 @@ typedef struct game{
     MATCH* match;
 }GAME;
 
+void mustInit(bool test, char* description);
 int countFilesFolder(char* folder_path);
 
 MATCH* createMatch();
@@ -193,6 +198,7 @@ JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
 ATTACK* createAttack(PLAYER* player, short id, short direction);
 ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder);
+ALLEGRO_BITMAP** createSpritesProjs(PLAYER* player, char* folder);
 
 void destroyList(PROJECTILE** list);
 void destroyPlayer(PLAYER* player);
@@ -224,11 +230,18 @@ void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* attacker, PLAYER* v
 
 void staminaRegen(PLAYER* player);
 
+void roundReset(MATCH* match);
+bool pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* font, MATCH* match);
 void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event);
 void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event);
 
 void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2);
 void cooldowns(ALLEGRO_EVENT event, PLAYER* player);
 void animationSelect(PLAYER* player);
+void animationSelectProjectile(PLAYER* player);
+
+void drawCharacter(PLAYER* player1, PLAYER* player2);
+void drawProjectile(PLAYER* player);
+void drawShadow(PLAYER* player);
 
 #endif

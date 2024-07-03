@@ -1,19 +1,26 @@
 #include "street.h"
+#include <allegro5/allegro_audio.h>
+#include <allegro5/events.h>
 #include <allegro5/timer.h>
 #include <stdbool.h>
 
-int countFilesFolder(char* path){
+void mustInit(bool test, char* description){
+    if(!test){
+        printf("%s\n", description);
+        exit(1);
+    }
+    return;
+}
 
+int countFilesFolder(char* path){
     int counter = 0;
-    struct dirent *entry;
+    struct dirent *dir;
     DIR *dp = opendir(path);
 
-    if (dp == NULL) {
-        perror("opendir");
+    if (dp == NULL)
         return -1;
-    }
-    while ((entry = readdir(dp)))
-        if (entry->d_type == DT_REG)
+    while ((dir = readdir(dp)))
+        if(dir->d_type == DT_REG)
             counter++;
     closedir(dp);
     return counter;
@@ -53,37 +60,6 @@ void roundReset(MATCH* match){
     match->P2->y = GROUND_LEVEL - BASE_HEIGHT / 2;
     destroyList(&match->P1->projs);
     destroyList(&match->P2->projs);
-    return;
-}
-
-//winner2 eh diferente de NULL se for empate
-void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event){
-    if(winner && winner2){//Empate
-        al_clear_to_color(al_map_rgb(0,0,0));
-        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "ROUND OVER");
-        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "TIE");
-    }
-    else if(winner->rounds == 1){
-        al_clear_to_color(al_map_rgb(0,0,0));
-        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "ROUND OVER");
-        if(winner == match->P1)
-            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 1 WINS");
-        else
-            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 2 WINS");
-    }
-    else{//Match end
-        al_clear_to_color(al_map_rgb(0,0,0));
-        al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, HEADER_LEVEL, ALLEGRO_ALIGN_CENTER, "MATCH OVER");
-        if(winner == match->P1)
-            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 1 WINS");
-        else
-            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "PLAYER 2 WINS");
-    }
-    roundReset(match);
-    al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, FOOTER_LEVEL, ALLEGRO_ALIGN_CENTER, "PRESS SPACE TO CONTINUE");
-    al_flip_display();
-
-    pressSpace(queue, &event);
     return;
 }
 
@@ -160,6 +136,28 @@ void gaugeGain(PLAYER* player, short id){
     else
         player->gauge += DAMAGE_GAUGE_GAIN;
     player->gauge = (player->gauge > MAX_GAUGE) ? MAX_GAUGE : player->stamina; //Limite superior
+    return;
+}
+
+//Carrega sprites dos projeteis
+void animationSelectProjectile(PLAYER* player){
+    char path[1024];
+    char* ch;
+
+    if(player->fighter.id == monk)
+        strcpy(path,"images/projectiles/blue/");
+    else if (player->fighter.id == cleric || player->fighter.id == brawler)
+        strcpy(path,"images/projectiles/red/");
+
+    player->spritesProjs = createSpritesProjs(player, path);
+    strcat(path,"*.png");
+    ch = strchr(path, '*');
+    for(int i = 0; i < player->sizeSprites; i++){
+        char c = i + 1 + '0'; //numero de i+1 em char
+        *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
+        printf("%s\n", path);
+        player->spritesProjs[i] = al_load_bitmap(path);
+    }
     return;
 }
 

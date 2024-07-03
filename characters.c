@@ -1,4 +1,5 @@
 #include "street.h"
+#include <time.h>
 
 //Cria Partida
 MATCH* createMatch(){
@@ -87,6 +88,9 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     player->fighter.id = id;//temp
     player->fighter.size = 0;
     player->fighter.sprite = NULL;
+    player->spritesProjs = NULL;
+
+    animationSelectProjectile(player);
 
     //TIMERS COOLDOWN
     player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
@@ -115,17 +119,25 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     return player;
 }
 
+ALLEGRO_BITMAP** createSpritesProjs(PLAYER* player, char* folder){
+    ALLEGRO_BITMAP** sprites = NULL;
+    player->sizeSprites = countFilesFolder(folder);
+    if(player->sizeSprites <= 0)
+        return NULL;
+    sprites = (ALLEGRO_BITMAP**)malloc(sizeof(ALLEGRO_BITMAP*)* player->sizeSprites);
+    mustInit(sprites != NULL, "sprites");
+    return sprites;
+}
+
 ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder){
     ALLEGRO_BITMAP** sprites = NULL;
     player->fighter.size = countFilesFolder(folder);
     player->fighter.currentFrame = 0;
     player->fighter.newFlag = false;
-    printf("%d\n", player->fighter.size);
     if(player->fighter.size <= 0)
         return NULL;
     sprites = (ALLEGRO_BITMAP**)malloc(sizeof(ALLEGRO_BITMAP*)* player->fighter.size);
-    if(!sprites)
-        return NULL;
+    mustInit(sprites != NULL, "sprites");
     return sprites;
 }
 
@@ -166,9 +178,9 @@ ATTACK* createAttack(PLAYER* player, short id, short direction){
     }
     attack->id = id;
     if(direction == left)
-        attack->x = player->x - player->length;
+        attack->x = player->x - player->length * 1.25;
     else
-        attack->x = player->x + player->length;
+        attack->x = player->x + player->length * 1.25;
     attack->hitFlag = false;
     al_start_timer(player->cooldownAttack);
     return attack;
@@ -184,6 +196,7 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     proj->dmg = BASE_DMG_PROJ;
     proj->speed = PROJECTILE_SPEED;
     proj->y = player->y;
+    proj->currentFrame = 0;
     if(direction == left)
         proj->x = player->x - player->length / 2;
     else
@@ -191,68 +204,6 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     proj->side = PROJ_SIZE;
     proj->next = list;
     return proj;
-}
-
-//Libera projetil e relinka a lista
-void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
-    PROJECTILE* aux = *list;
-    if (!list || !*list || !p) return;
-    if(*list == p){
-        *list = (*list)->next;
-        free(p);
-        return;
-    }
-    while(aux->next != p)
-        aux = aux->next;
-    aux->next = p->next;
-    free(p);
-    return;
-}
-
-void destroyAttack(PLAYER* player){
-    free(player->attacks);
-    player->attacks = NULL;
-    return;
-}
-
-void destroyList(PROJECTILE** list){
-    PROJECTILE* aux;
-
-    while(*list){
-        aux = (*list)->next;
-        free(*list);
-        *list = aux;
-    }
-    list = NULL;
-    return;
-}
-
-void destroyMatch(MATCH* match){
-
-    destroyPlayer(match->P1);
-    destroyPlayer(match->P2);
-    /*
-    fclose(match->map.map);
-    fclose(match->map.soundMap);
-    */
-    //al_destroy_sample(match->music);
-    for(int i = 0; i < IMAGE_NUM; i++)
-        al_destroy_bitmap(match->map.map[i]);
-    // al_destroy_audio_stream(match->map.music);
-    free(match);
-}
-
-void destroyPlayer(PLAYER* player){
-    free(player->stick);
-    destroyList(&player->projs);
-    al_destroy_timer(player->cooldownAttack);
-    al_destroy_timer(player->cooldownProj);
-    al_destroy_timer(player->attackDuration);
-    al_destroy_timer(player->damageState);
-    al_destroy_timer(player->fighter.frameAttack);
-    al_destroy_timer(player->fighter.frameMovement);
-    free(player);
-    return;
 }
 
 void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
