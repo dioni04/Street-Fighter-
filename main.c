@@ -74,9 +74,13 @@ int main(){
 
         if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)//Botao 'X' da Janela
             break;
-        if(event.type == ALLEGRO_EVENT_KEY_DOWN && event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-            if(pauseMenu(queue, &event, font, match))
+        if(event.type == ALLEGRO_EVENT_KEY_DOWN && event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){
+            short select = pauseMenu(queue, &event, font, match);
+            if(select == exitGame)
                 break;
+            else if(select == mainMenu)
+                break;//temp
+        }
         keybinds(event, player1, player2);
 
         if(event.type == ALLEGRO_EVENT_TIMER){ //Novo clock event

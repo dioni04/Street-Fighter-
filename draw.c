@@ -4,6 +4,7 @@
 #include <allegro5/bitmap_draw.h>
 #include <allegro5/bitmap_io.h>
 #include <allegro5/color.h>
+#include <allegro5/keycodes.h>
 #include <stdbool.h>
 
 void drawShadow(PLAYER* player){
@@ -118,23 +119,48 @@ void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* wi
     return;
 }
 
-bool pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* font, MATCH* match){
+short pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* font, MATCH* match){
     bool select[3];//vetor para selecionar
+    short i = 0;
     select[0] = true; select[1] = false; select[2] = false;
 
-    al_clear_to_color(al_map_rgb(0,0,0));
-    // al_draw_filled_rectangle(0, 0, MAX_X, MAX_Y, al_map_rgba(171,165 ,155, 125));
-    al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y * 0.4, ALLEGRO_ALIGN_CENTER, "RESUME");
-    al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "MAIN MENU");
-    al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y * 0.6, ALLEGRO_ALIGN_CENTER, "EXIT");
-    al_flip_display();
     while(1){
+        al_clear_to_color(al_map_rgb(0,0,0));
+        // al_draw_filled_rectangle(0, 0, MAX_X, MAX_Y, al_map_rgba(171,165 ,155, 125));
+        if(select[0])
+            al_draw_text(font, al_map_rgb(255, 198, 68), MAX_X / 2, MAX_Y * 0.4, ALLEGRO_ALIGN_CENTER, "RESUME");
+        else
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y * 0.4, ALLEGRO_ALIGN_CENTER, "RESUME");
+        if(select[1])
+            al_draw_text(font, al_map_rgb(255, 198, 68), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "MAIN MENU");
+        else
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y / 2, ALLEGRO_ALIGN_CENTER, "MAIN MENU");
+        if(select[2])
+            al_draw_text(font, al_map_rgb(255, 198, 68), MAX_X / 2, MAX_Y * 0.6, ALLEGRO_ALIGN_CENTER, "EXIT");
+        else
+            al_draw_text(font, al_map_rgb(255, 255, 255), MAX_X / 2, MAX_Y * 0.6, ALLEGRO_ALIGN_CENTER, "EXIT");
+        al_flip_display();
         al_wait_for_event(queue, event);
+        //seleciona no menu
         if(event->type == ALLEGRO_EVENT_KEY_DOWN){
             if(event->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-                return false;//Sai do menu
+                return resume;//Sai do menu
             else if(event->keyboard.keycode == ALLEGRO_KEY_ENTER)
-                return true;
+                return i;//retorna opcao atual
+            else if(event->keyboard.keycode == ALLEGRO_KEY_UP){
+                if(i != 0){
+                    select[i] = false;
+                    i--;
+                    select[i] = true;
+                }
+            }
+            else if(event->keyboard.keycode == ALLEGRO_KEY_DOWN){
+                if(i != 2){
+                    select[i] = false;
+                    i++;
+                    select[i] = true;
+                }
+            }
         }
     }
     return 0;

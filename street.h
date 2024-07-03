@@ -23,6 +23,7 @@ enum direction{none, up, down, left, right};
 enum action{attack, hit, projectile};
 enum attackType{punch, kick};
 enum charID{monk, cleric, brawler};
+enum pause{resume, mainMenu, exitGame};
 
 #define MAX_X 544.0
 #define MAX_Y 320.0
@@ -231,7 +232,7 @@ void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* attacker, PLAYER* v
 void staminaRegen(PLAYER* player);
 
 void roundReset(MATCH* match);
-bool pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* font, MATCH* match);
+short pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* font, MATCH* match);
 void roundEnd(ALLEGRO_DISPLAY* disp,ALLEGRO_FONT* font ,MATCH* match, PLAYER* winner, PLAYER* winner2, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event);
 void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event);
 

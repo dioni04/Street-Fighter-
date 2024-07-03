@@ -44,7 +44,7 @@ void destroyMatch(MATCH* match){
     fclose(match->map.soundMap);
     */
     //al_destroy_sample(match->music);
-    for(int i = 0; i < IMAGE_NUM; i++)
+    for(int i = 0; i < 4; i++)
         al_destroy_bitmap(match->map.map[i]);
     // al_destroy_audio_stream(match->map.music);
     free(match);

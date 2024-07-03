@@ -19,8 +19,8 @@ MATCH* createMatch(){
     al_set_audio_stream_playing(match->map.music, true);
     al_set_audio_stream_gain(match->map.music, 1.0);
     */
-    match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * IMAGE_NUM);
-    for(int i = 0; i < IMAGE_NUM; i++){
+    match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * 4);
+    for(int i = 0; i < 4; i++){
         char c = i + 1 + '0'; //numero de i+1 em char
         char location[25] = "images/map/forest/*.png";
         location[18] = c;
