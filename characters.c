@@ -1,8 +1,8 @@
 #include "street.h"
-#include <time.h>
+#include <allegro5/events.h>
 
 //Cria Partida
-MATCH* createMatch(){
+MATCH* createMatch(short map){
     MATCH* match = NULL;
 
     match = (MATCH*)malloc(sizeof(MATCH));
@@ -19,18 +19,11 @@ MATCH* createMatch(){
     al_set_audio_stream_playing(match->map.music, true);
     al_set_audio_stream_gain(match->map.music, 1.0);
     */
-    match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * 4);
-    for(int i = 0; i < 4; i++){
-        char c = i + 1 + '0'; //numero de i+1 em char
-        char location[25] = "images/map/forest/*.png";
-        location[18] = c;
-        match->map.map[i] = al_load_bitmap(location);
-    }
-
-    match->ui.staminaBar = al_load_bitmap("images/ui/stamina.png");
+    loadMap(match, map);
+    match->ui.staminaBar = al_load_bitmap("images/ui/EmptyBar.png");
     if(!match->ui.staminaBar)
         printf("Stamina Error");
-    match->ui.healthBar = al_load_bitmap("images/ui/health.png");
+    match->ui.healthBar = al_load_bitmap("images/ui/EmptyBar.png");
     if(!match->ui.healthBar)
         printf("Health Error");
     if(!match->map.map)
@@ -94,29 +87,38 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
 
     //TIMERS COOLDOWN
     player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
-    if(!player->cooldownProj)
-        return NULL;
+    mustInit(player->cooldownProj != NULL, "Proj Cooldown");
     player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
-    if(!player->cooldownAttack)
-        return NULL;
+    mustInit(player->cooldownAttack != NULL, "Attack Cooldown");
     player->attackDuration = al_create_timer(ATTACK_DURATION);
-    if(!player->attackDuration)
-        return NULL;
+    mustInit(player->attackDuration != NULL, "Attack Duration");
     player->damageState = al_create_timer(DAMAGE_DURATION);
-    if(!player->damageState)
-        return NULL;
+    mustInit(player->damageState != NULL, "Damage Duration");
+    player->blockState = al_create_timer(BLOCK_DURATION);
+    mustInit(player->blockState != NULL, "Block Duration");
     player->fighter.frameMovement = al_create_timer(MOV_FRAME_DURATION);
-    if(!player->fighter.frameMovement)
-        return NULL;
+    mustInit(player->fighter.frameMovement != NULL, "Frame Movemnet");
     player->fighter.frameAttack = al_create_timer(ATTACK_FRAME_DURATION);
-    if(!player->fighter.frameAttack)
-        return NULL;
+    mustInit(player->fighter.frameAttack != NULL, "Attack Frame Duration");
+
     //JOYSTICK
     if(!player->stick){
         destroyPlayer(player);
         return NULL;
     }
     return player;
+}
+
+//Registra timers de player
+void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player){
+    al_register_event_source(queue, al_get_timer_event_source(player->cooldownProj));
+    al_register_event_source(queue, al_get_timer_event_source(player->cooldownAttack));
+    al_register_event_source(queue, al_get_timer_event_source(player->attackDuration));
+    al_register_event_source(queue, al_get_timer_event_source(player->damageState));
+    al_register_event_source(queue, al_get_timer_event_source(player->fighter.frameMovement));
+    al_register_event_source(queue, al_get_timer_event_source(player->fighter.frameAttack));
+    al_register_event_source(queue, al_get_timer_event_source(player->blockState));
+    return;
 }
 
 ALLEGRO_BITMAP** createSpritesProjs(PLAYER* player, char* folder){
@@ -204,6 +206,28 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     proj->side = PROJ_SIZE;
     proj->next = list;
     return proj;
+}
+
+void loadMap(MATCH* match, short map){
+    char path[512];
+    if(map == forest)
+        strcpy(path, "images/map/forest/");
+    else if(map == dojo)
+        strcpy(path, "images/map/dojo/");
+    else if(map == bamboo)
+        strcpy(path, "images/map/bamboo/");
+    match->map.size = countFilesFolder(path);
+    match->map.map = (ALLEGRO_BITMAP**)malloc(sizeof(match->map.map) * match->map.size);
+    mustInit(match->map.map != NULL, "Map");
+
+    strcat(path, "*.png");
+    char* ch = strchr(path, '*');
+    for(int i = 0; i < match->map.size; i++){
+        char c = i + 1 + '0'; //numero de i+1 em char
+        *ch = c;
+        match->map.map[i] = al_load_bitmap(path);
+    }
+    return ;
 }
 
 void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){

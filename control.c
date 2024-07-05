@@ -1,8 +1,4 @@
 #include "street.h"
-#include <allegro5/allegro_audio.h>
-#include <allegro5/events.h>
-#include <allegro5/timer.h>
-#include <stdbool.h>
 
 void mustInit(bool test, char* description){
     if(!test){
@@ -238,7 +234,7 @@ void animationSelect(PLAYER* player){
     for(i = 0; i < player->fighter.size; i++){
         char c = i + 1 + '0'; //numero de i+1 em char
         *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
-        printf("%s\n", path);
+        // printf("%s\n", path);
         player->fighter.sprite[i] = al_load_bitmap(path);
     }
     return;

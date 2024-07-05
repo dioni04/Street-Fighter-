@@ -24,9 +24,10 @@ enum action{attack, hit, projectile};
 enum attackType{punch, kick};
 enum charID{monk, cleric, brawler};
 enum pause{resume, mainMenu, exitGame};
+enum map{forest,dojo, bamboo};
 
-#define MAX_X 544.0
-#define MAX_Y 320.0
+#define MAX_X 1280.0
+#define MAX_Y 720.0
 #define FPS 30.0
 
 //Numeros base de elementos do jogo
@@ -52,7 +53,8 @@ enum pause{resume, mainMenu, exitGame};
 #define BASE_LENGTH (MAX_X*0.1)
 #define PROJ_SIZE (MAX_X*0.05)
 
-#define DAMAGE_DURATION 0.1
+#define BLOCK_DURATION 0.15
+#define DAMAGE_DURATION 0.2
 #define ATTACK_DURATION 0.45
 
 #define PROJ_COOLDOWN 1
@@ -85,6 +87,7 @@ struct gameData{
 
 
 struct mapData{
+    short size;
     ALLEGRO_BITMAP** map;
     ALLEGRO_AUDIO_STREAM* music;
 };
@@ -156,6 +159,7 @@ typedef struct player{
     ALLEGRO_TIMER* cooldownAttack;
     ALLEGRO_TIMER* attackDuration;
     ALLEGRO_TIMER* damageState;
+    ALLEGRO_TIMER* blockState;
     ALLEGRO_BITMAP** spritesProjs;
 }PLAYER;
 
@@ -193,7 +197,9 @@ typedef struct game{
 void mustInit(bool test, char* description);
 int countFilesFolder(char* folder_path);
 
-MATCH* createMatch();
+void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player);
+void loadMap(MATCH* match, short map);
+MATCH* createMatch(short map);
 PLAYER* createPlayer(MATCH* match,float x, float y, short id);
 JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
@@ -241,8 +247,11 @@ void cooldowns(ALLEGRO_EVENT event, PLAYER* player);
 void animationSelect(PLAYER* player);
 void animationSelectProjectile(PLAYER* player);
 
+void drawMap(MATCH* match);
 void drawCharacter(PLAYER* player1, PLAYER* player2);
 void drawProjectile(PLAYER* player);
 void drawShadow(PLAYER* player);
+short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event ,MATCH* match,PLAYER* player1, PLAYER* player2);
+void drawRounds(PLAYER* player1, PLAYER* player2);
 
 #endif

@@ -1,5 +1,4 @@
 #include "street.h"
-#include <allegro5/bitmap.h>
 
 //Libera projetil e relinka a lista
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
@@ -18,6 +17,8 @@ void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
 }
 
 void destroyAttack(PLAYER* player){
+    if(!player->attacks)
+        return;
     free(player->attacks);
     player->attacks = NULL;
     return;
@@ -44,7 +45,7 @@ void destroyMatch(MATCH* match){
     fclose(match->map.soundMap);
     */
     //al_destroy_sample(match->music);
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < match->map.size; i++)
         al_destroy_bitmap(match->map.map[i]);
     // al_destroy_audio_stream(match->map.music);
     free(match);
