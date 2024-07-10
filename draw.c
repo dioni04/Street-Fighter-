@@ -232,5 +232,12 @@ short pauseMenu(ALLEGRO_EVENT_QUEUE* queue,ALLEGRO_EVENT* event, ALLEGRO_FONT* f
         }
     }
     return 0;
+}
 
+void nextFrame(PLAYER* player, ALLEGRO_EVENT event){
+    if(event.timer.source == player->fighter.frameMovement)
+        player->fighter.currentFrame = (player->fighter.currentFrame + 1) % player->fighter.size;//proximo frame
+    else if(event.timer.source == player->fighter.frameAttack && player->fighter.currentFrame < player->fighter.size - 1)
+        player->fighter.currentFrame++;
+    return;
 }

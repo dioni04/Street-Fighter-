@@ -253,5 +253,6 @@ void drawProjectile(PLAYER* player);
 void drawShadow(PLAYER* player);
 short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event ,MATCH* match,PLAYER* player1, PLAYER* player2);
 void drawRounds(PLAYER* player1, PLAYER* player2);
+void nextFrame(PLAYER* player, ALLEGRO_EVENT event);
 
 #endif

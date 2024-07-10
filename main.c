@@ -1,4 +1,5 @@
 #include "street.h"
+#include <asm-generic/errno.h>
 
 int main(){
     al_init();
@@ -116,10 +117,8 @@ int main(){
                 }
             }
             //Atualizacao frame de animacao
-            else if(event.timer.source == player1->fighter.frameMovement || event.timer.source == player1->fighter.frameAttack)
-                player1->fighter.currentFrame = (player1->fighter.currentFrame + 1) % player1->fighter.size;//proximo frame
-            else if(event.timer.source == player2->fighter.frameMovement || event.timer.source == player2->fighter.frameAttack)
-                player2->fighter.currentFrame = (player2->fighter.currentFrame + 1) % player2->fighter.size;//proximo frame
+            nextFrame(player1, event);
+            nextFrame(player2, event);
         }
         if(redraw && al_is_event_queue_empty(queue)){ //Novo Frame
             redraw = false;
