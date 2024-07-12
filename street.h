@@ -61,9 +61,9 @@ enum map{forest,dojo, bamboo};
 #define ATTACK_COOLDOWN 0.4
 
 #define STAMINA_REGEN 1
-#define PROJ_COST 25
-#define PUNCH_COST 15
-#define KICK_COST 20
+#define PROJ_COST 40
+#define PUNCH_COST 25
+#define KICK_COST 35
 
 #define ATTACK_GAUGE_GAIN 5
 #define DAMAGE_GAUGE_GAIN 3
