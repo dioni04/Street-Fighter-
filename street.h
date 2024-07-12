@@ -55,7 +55,7 @@ enum map{forest,dojo, bamboo};
 
 #define BLOCK_DURATION 0.15
 #define DAMAGE_DURATION 0.2
-#define ATTACK_DURATION 0.45
+#define ATTACK_DURATION 0.375
 
 #define PROJ_COOLDOWN 1
 #define ATTACK_COOLDOWN 0.4
@@ -69,7 +69,7 @@ enum map{forest,dojo, bamboo};
 #define DAMAGE_GAUGE_GAIN 3
 #define PROJECTILE_GAUGE_GAIN 4
 
-#define ATTACK_FRAME_DURATION 1/12.0
+#define ATTACK_FRAME_DURATION 1/13.0
 #define MOV_FRAME_DURATION 1/3.0
 #define GLOBAL_FRAME_TIME 1/20.0 //frame para animacoes de projeteis
 
@@ -83,8 +83,6 @@ struct gameData{
     FILE** map;
     FILE** mapSounds;
 };
-
-
 
 struct mapData{
     short size;
@@ -158,6 +156,7 @@ typedef struct player{
     ALLEGRO_TIMER* cooldownProj;
     ALLEGRO_TIMER* cooldownAttack;
     ALLEGRO_TIMER* attackDuration;
+    ALLEGRO_TIMER* projDuration;
     ALLEGRO_TIMER* damageState;
     ALLEGRO_TIMER* blockState;
     ALLEGRO_BITMAP** spritesProjs;

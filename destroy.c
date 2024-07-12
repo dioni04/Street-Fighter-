@@ -1,4 +1,5 @@
 #include "street.h"
+#include <allegro5/timer.h>
 
 //Libera projetil e relinka a lista
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
@@ -60,6 +61,7 @@ void destroyPlayer(PLAYER* player){
     al_destroy_timer(player->damageState);
     al_destroy_timer(player->fighter.frameAttack);
     al_destroy_timer(player->fighter.frameMovement);
+    al_destroy_timer(player->projDuration);
     for(int i = 0; i < player->sizeSprites; i++)
         al_destroy_bitmap(player->spritesProjs[i]);
     free(player);

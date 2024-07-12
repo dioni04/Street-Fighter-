@@ -29,7 +29,16 @@ void drawShadow(PLAYER* player){
 void drawPlayer(PLAYER* player, float ratio, short flag){
     if(al_get_timer_started(player->damageState))
         al_draw_tinted_scaled_bitmap(player->fighter.sprite[player->fighter.currentFrame],
-                                        al_map_rgb(255, 0, 0),0,0,
+                                        al_map_rgb(255, 120, 120),0,0,
+                                        al_get_bitmap_width(player->fighter.sprite[player->fighter.currentFrame]),
+                                        al_get_bitmap_height(player->fighter.sprite[player->fighter.currentFrame]),
+                                        player->x - player->length * 2, player->y - player->height,
+                                        al_get_bitmap_width(player->fighter.sprite[player->fighter.currentFrame]) * ratio,
+                                        al_get_bitmap_height(player->fighter.sprite[player->fighter.currentFrame]) * ratio,
+                                        flag);
+    else if(al_get_timer_started(player->blockState))
+        al_draw_tinted_scaled_bitmap(player->fighter.sprite[player->fighter.currentFrame],
+                                        al_map_rgb(120, 120, 255),0,0,
                                         al_get_bitmap_width(player->fighter.sprite[player->fighter.currentFrame]),
                                         al_get_bitmap_height(player->fighter.sprite[player->fighter.currentFrame]),
                                         player->x - player->length * 2, player->y - player->height,
@@ -73,7 +82,7 @@ void drawProjectile(PLAYER* player){
                                         0,0,
                                         al_get_bitmap_width(player->spritesProjs[aux->currentFrame]),
                                         al_get_bitmap_height(player->spritesProjs[aux->currentFrame]),
-                                        aux->x , aux->y - aux->side,
+                                        aux->x , aux->y - aux->side * 1.5,
                                         al_get_bitmap_width(player->spritesProjs[aux->currentFrame]) * ratio,
                                         al_get_bitmap_height(player->spritesProjs[aux->currentFrame]) * ratio,
                                         0);
@@ -82,7 +91,7 @@ void drawProjectile(PLAYER* player){
                                         0,0,
                                         al_get_bitmap_width(player->spritesProjs[aux->currentFrame]),
                                         al_get_bitmap_height(player->spritesProjs[aux->currentFrame]),
-                                        aux->x , aux->y - aux->side,
+                                        aux->x , aux->y - aux->side * 1.5,
                                         al_get_bitmap_width(player->spritesProjs[aux->currentFrame]) * ratio,
                                         al_get_bitmap_height(player->spritesProjs[aux->currentFrame]) * ratio,
                                         ALLEGRO_FLIP_HORIZONTAL);

@@ -1,5 +1,7 @@
 #include "street.h"
 #include <allegro5/events.h>
+#include <allegro5/timer.h>
+#include <stdbool.h>
 
 //Cria Partida
 MATCH* createMatch(short map){
@@ -100,6 +102,8 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     mustInit(player->fighter.frameMovement != NULL, "Frame Movemnet");
     player->fighter.frameAttack = al_create_timer(ATTACK_FRAME_DURATION);
     mustInit(player->fighter.frameAttack != NULL, "Attack Frame Duration");
+    player->projDuration = al_create_timer(ATTACK_DURATION);
+    mustInit(player->projDuration != NULL, "Proj Duration");
 
     //JOYSTICK
     if(!player->stick){
@@ -118,6 +122,7 @@ void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player){
     al_register_event_source(queue, al_get_timer_event_source(player->fighter.frameMovement));
     al_register_event_source(queue, al_get_timer_event_source(player->fighter.frameAttack));
     al_register_event_source(queue, al_get_timer_event_source(player->blockState));
+    al_register_event_source(queue, al_get_timer_event_source(player->projDuration));
     return;
 }
 
@@ -250,7 +255,9 @@ void projectileWrapper(PLAYER* attacker, PLAYER* victim){
         attacker->projs = createProjectile(attacker, right, attacker->projs);
     else
         attacker->projs = createProjectile(attacker, left, attacker->projs);
+    al_start_timer(attacker->projDuration);
     al_start_timer(attacker->cooldownProj);
+    attacker->fighter.newFlag = true;
     attacker->stamina -= PROJ_COST;
     return;
 }

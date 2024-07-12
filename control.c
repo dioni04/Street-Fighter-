@@ -1,4 +1,7 @@
 #include "street.h"
+#include <allegro5/timer.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 void mustInit(bool test, char* description){
     if(!test){
@@ -90,10 +93,22 @@ void checkHitAttack(PLAYER* attacker, PLAYER* victim){
     if(!attacker->attacks || attacker->attacks->hitFlag){
         return;
     }
-    if(attacker->attacks->id == punch && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != walkB && victim->state != crouch)//hit
-        hitApply(NULL, attacker->attacks, attacker, victim);
-    else if(attacker->attacks->id == kick && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != crouch)
-        hitApply(NULL, attacker->attacks, attacker, victim);
+    if(attacker->attacks->id == punch && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != crouch){//hit
+        if(victim->state != walkB)
+            hitApply(NULL, attacker->attacks, attacker, victim);
+        else{//block
+            al_start_timer(victim->blockState);
+            attacker->attacks->hitFlag = true;
+        }
+    }
+    else if(attacker->attacks->id == kick && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim)){
+        if(victim->state != crouch)
+            hitApply(NULL, attacker->attacks, attacker, victim);
+        else{//block
+            al_start_timer(victim->blockState);
+            attacker->attacks->hitFlag = true;
+        }
+    }
     return;
 }
 
@@ -112,6 +127,12 @@ void cooldowns(ALLEGRO_EVENT event, PLAYER* player){
     }
     if(event.timer.source == player->damageState){
         al_stop_timer(player->damageState);
+        player->fighter.newFlag = true;
+    }
+    if(event.timer.source == player->blockState)
+        al_stop_timer(player->blockState);
+    if(event.timer.source == player->projDuration){
+        al_stop_timer(player->projDuration);
         player->fighter.newFlag = true;
     }
     return;
@@ -184,7 +205,11 @@ void animationSelect(PLAYER* player){
 
     //Path para diretorio
     if(player->state == stand){
-        if(!player->attacks)
+        if(al_get_timer_started(player->projDuration)){
+            strcat(path,"punch/");
+            attack = true;
+        }
+        else if(!player->attacks)
             strcat(path,"idle/");
         else if(player->attacks->id == punch){
             strcat(path,"punch/");
@@ -235,6 +260,7 @@ void animationSelect(PLAYER* player){
         char c = i + 1 + '0'; //numero de i+1 em char
         *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
         // printf("%s\n", path);
+        printf("%s\n", path);
         player->fighter.sprite[i] = al_load_bitmap(path);
     }
     return;

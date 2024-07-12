@@ -1,9 +1,8 @@
 #include "street.h"
+#include <allegro5/timer.h>
 
 void moveUp(PLAYER* player){
-
     player->stick->up = !player->stick->up;
-
     //Se estiver agachado nao faz nada(Prioridade)
     if(player->stick->up){
         if(player->state == stand){
@@ -28,7 +27,6 @@ void moveUp(PLAYER* player){
 void moveDown(PLAYER* player, PLAYER* player2){
 
     player->stick->down = !player->stick->down;
-
     //Se estiver pulando nao faz nada
     if(player->stick->down){
         if(player->state == stand || player->state == walkB || player->state == walkF){
@@ -64,9 +62,7 @@ void moveDown(PLAYER* player, PLAYER* player2){
 }
 
 void moveLeft(PLAYER* player1, PLAYER* player2){
-
     player1->stick->left = !player1->stick->left;
-
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->left && player1->state == stand){
         if(AT_LEFT(player1->x, player2->x))
@@ -102,9 +98,7 @@ void moveLeft(PLAYER* player1, PLAYER* player2){
 }
 
 void moveRight(PLAYER* player1, PLAYER* player2){
-
     player1->stick->right = !player1->stick->right;
-
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->right && player1->state == stand){
         if(AT_RIGHT(player1->x, player2->x))
@@ -266,8 +260,10 @@ void moveProjectile(PLAYER* player1, PLAYER* player2){
             }
 
             if(aux && inRangeX(aux->x, player2) && inRangeY(aux->y, player2) && player2->state != crouch){ //Hit
-                if(player2->state == walkB)
+                if(player2->state == walkB){
                     destroyProjectile(&player1->projs, aux);
+                    al_start_timer(player2->blockState);
+                }
                 else
                     hitApply(aux, NULL,player1, player2);
                 aux = NULL;
@@ -290,19 +286,19 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
     if(event.type == ALLEGRO_EVENT_KEY_DOWN){//Keybinds dos ataques
         //PLAYER1
         //Soco
-        if(event.keyboard.keycode == ALLEGRO_KEY_R && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_R && player1->state !=walkB && player1->state != walkF && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, punch);
         //kick
-        if(event.keyboard.keycode == ALLEGRO_KEY_T && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_T && player1->state !=walkB && player1->state != walkF && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, kick);
         //Projetil
         if(event.keyboard.keycode == ALLEGRO_KEY_Y && !al_get_timer_started(player1->cooldownProj) && player1->state == stand && player1->stamina >= PROJ_COST && !al_get_timer_started(player1->damageState))
             projectileWrapper(player1, player2);
         //PLAYER2
-        if(event.keyboard.keycode == ALLEGRO_KEY_J && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_J && player2->state !=walkB && player2->state != walkF && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, punch);
 
-        if(event.keyboard.keycode == ALLEGRO_KEY_K && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_K && player2->state !=walkB && player2->state != walkF && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, kick);
 
         if(event.keyboard.keycode == ALLEGRO_KEY_L && !al_get_timer_started(player2->cooldownProj) && player2->state == stand && player2->stamina >= PROJ_COST && !al_get_timer_started(player2->damageState))
