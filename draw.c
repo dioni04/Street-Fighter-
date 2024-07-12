@@ -103,7 +103,7 @@ void drawProjectile(PLAYER* player){
 
 short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event ,MATCH* match,PLAYER* player1, PLAYER* player2){
     if(player1->health > 0)
-        al_draw_filled_rounded_rectangle((MAX_X * 0.454)*(1.0275 - player1->health*0.01),0, MAX_X*0.454, HEADER_LEVEL / 2, 10, 15,al_map_rgb(255, 0, 0)); //VIDA P1
+        al_draw_filled_rounded_rectangle((MAX_X * 0.454)*(1.0275 - (float)player1->health/BASE_HEALTH),0, MAX_X*0.454, HEADER_LEVEL / 2, 10, 15,al_map_rgb(255, 0, 0)); //VIDA P1
     else{
         player2->rounds++;
         roundEnd(disp, font, match, player2, NULL, queue, event);
@@ -112,7 +112,7 @@ short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* que
     }
 
     if(player2->health > 0)
-        al_draw_filled_rounded_rectangle(MAX_X*0.5475, 0 ,(MAX_X * 0.989) - ((1 - player2->health * 0.01) * MAX_X * 0.45), HEADER_LEVEL / 2, 10, 15,al_map_rgb(255, 0, 0)); //VIDA P2
+        al_draw_filled_rounded_rectangle(MAX_X*0.5475, 0 ,(MAX_X * 0.989) - ((1 - (float)player2->health/BASE_HEALTH) * MAX_X * 0.45), HEADER_LEVEL / 2, 10, 15,al_map_rgb(255, 0, 0)); //VIDA P2
     else{
         player1->rounds++;
         roundEnd(disp, font, match, player1, NULL, queue, event);
@@ -124,9 +124,9 @@ short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* que
     staminaRegen(player2);
 
     if(player1->stamina > 0)
-        al_draw_filled_rectangle((MAX_X * 0.25)*(1.06 - player1->stamina*0.01),HEADER_LEVEL * 0.75, MAX_X*0.31, HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P1
+        al_draw_filled_rectangle((MAX_X * 0.25)*(1.05 - (float)player1->stamina/BASE_STAMINA),HEADER_LEVEL * 0.75, MAX_X*0.31, HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P1
     if(player2->stamina > 0)
-        al_draw_filled_rectangle(MAX_X*0.695, HEADER_LEVEL * 0.75,(MAX_X * 0.989) - ((1 - player2->stamina * 0.01) * MAX_X * 0.25) ,HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P2
+        al_draw_filled_rectangle(MAX_X*0.6925, HEADER_LEVEL * 0.75,(MAX_X * 0.99) - ((1 - (float)player2->stamina/BASE_STAMINA) * MAX_X * 0.25) ,HEADER_LEVEL,al_map_rgb(0, 255, 0)); //Stamina P2
 
     //BARRAS DE VIDA
     float ratio = (MAX_X*0.48) / al_get_bitmap_width(match->ui.healthBar);

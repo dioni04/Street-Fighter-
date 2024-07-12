@@ -32,12 +32,12 @@ enum map{forest,dojo, bamboo};
 
 //Numeros base de elementos do jogo
 #define MATCH_LENGTH 90
-#define BASE_HEALTH 100
+#define BASE_HEALTH 150
 #define BASE_DMG_PUNCH 15
 #define BASE_DMG_KICK 25
 #define BASE_DMG_PROJ 30
 #define BASE_POISE 100
-#define BASE_STAMINA 100
+#define BASE_STAMINA 75
 #define MAX_GAUGE 100
 
 #define BASE_SPEEDX (MAX_X / 150.0)
