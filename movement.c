@@ -1,9 +1,12 @@
 #include "street.h"
-#include <allegro5/timer.h>
 
-void moveUp(PLAYER* player){
+void moveUp(ALLEGRO_EVENT* event, PLAYER* player){
+    if(!player->stick->valUp && event && event->type == ALLEGRO_EVENT_KEY_UP)//evita bug se comecar com tecla segurada
+        return;
+    else
+        player->stick->valUp = true;
     player->stick->up = !player->stick->up;
-    //Se estiver agachado nao faz nada(Prioridade)
+    //Se estiver agachado nao faz nada
     if(player->stick->up){
         if(player->state == stand){
             player->state = jump;
@@ -24,8 +27,11 @@ void moveUp(PLAYER* player){
     return;
 }
 
-void moveDown(PLAYER* player, PLAYER* player2){
-
+void moveDown(ALLEGRO_EVENT* event, PLAYER* player, PLAYER* player2){
+    if(!player->stick->valDown && event && event->type == ALLEGRO_EVENT_KEY_UP)//evita bug se comecar com tecla segurada
+        return;
+    else
+        player->stick->valDown = true;
     player->stick->down = !player->stick->down;
     //Se estiver pulando nao faz nada
     if(player->stick->down){
@@ -35,6 +41,7 @@ void moveDown(PLAYER* player, PLAYER* player2){
             player->fighter.newFlag = true;
         }
     }
+    //se levantar e tiver outra tecla pressionada
     else if(!player->stick->down && player->state == crouch){
         if(player->stick->left){
             if(AT_LEFT(player, player2))
@@ -61,7 +68,11 @@ void moveDown(PLAYER* player, PLAYER* player2){
     return;
 }
 
-void moveLeft(PLAYER* player1, PLAYER* player2){
+void moveLeft(ALLEGRO_EVENT* event, PLAYER* player1, PLAYER* player2){
+    if(!player1->stick->valLeft && event && event->type == ALLEGRO_EVENT_KEY_UP)//evita bug se comecar com tecla segurada
+        return;
+    else
+        player1->stick->valLeft = true;
     player1->stick->left = !player1->stick->left;
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->left && player1->state == stand){
@@ -97,7 +108,11 @@ void moveLeft(PLAYER* player1, PLAYER* player2){
     return;
 }
 
-void moveRight(PLAYER* player1, PLAYER* player2){
+void moveRight(ALLEGRO_EVENT* event, PLAYER* player1, PLAYER* player2){
+    if(!player1->stick->valRight && event && event->type == ALLEGRO_EVENT_KEY_UP)//evita bug se comecar com tecla segurada
+        return;
+    else
+        player1->stick->valRight = true;
     player1->stick->right = !player1->stick->right;
     //Dependendo da posicao do outro player recebe estado
     if(player1->stick->right && player1->state == stand){
@@ -120,7 +135,7 @@ void moveRight(PLAYER* player1, PLAYER* player2){
         player1->directionX = none;
         player1->fighter.newFlag = true;
     }
-        //se tiver as duas direcoes apertadas e soltar uma
+        //Se tiver as duas direcoes apertadas e soltar uma
     else if(player1->stick->left && player1->directionY == none){
         player1->directionX = left;
         if(AT_LEFT(player1, player2))
@@ -131,6 +146,57 @@ void moveRight(PLAYER* player1, PLAYER* player2){
     }
 
     return;
+}
+
+/*movimento do computador se estiver em single player
+ * Anda e ataque quando no range e/ou fora de cooldown
+ * Se estiver em animação não faz nada
+ */
+void singlePlayerMovement(PLAYER* player1, PLAYER* player2){
+  
+     if(al_get_timer_started(player2->attackDuration) || al_get_timer_started(player2->projDuration) || al_get_timer_started(player2->damageState))
+         return ;   
+     if(AT_LEFT(player2->x, player1->x)){
+         if(player2->directionX == left)//troca lado
+             moveLeft(NULL, player2,player1);
+         if(inRangeX(player2->x + player2->length * 1.25, player1)){
+             if(player2->directionX == right)
+                  moveRight(NULL, player2, player1);
+             if(!al_get_timer_started(player2->cooldownAttack))//soco
+                  attackWrapper(player2, player1, punch);
+             else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                  attackWrapper(player2, player1, kick);
+         }
+         else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+              if(player2->directionX == right)
+                  moveRight(NULL, player2, player1);
+              projectileWrapper(player2, player1);
+         }
+         else if(player2->directionX != right){//movemento
+              moveRight(NULL, player2, player1);
+         }
+     }
+     else{
+         if(player2->directionX == right)//troca lado
+             moveRight(NULL, player2,player1);
+         if(inRangeX(player2->x - player2->length * 1.25, player1)){
+             if(player2->directionX == left)
+                  moveLeft(NULL, player2, player1);
+             if(!al_get_timer_started(player2->cooldownAttack))//soco
+                  attackWrapper(player2, player1, punch);
+             else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                  attackWrapper(player2, player1, kick);
+         }
+         else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+              if(player2->directionX == left)
+                  moveLeft(NULL, player2, player1);
+              projectileWrapper(player2, player1);
+         }
+         else if(player2->directionX != left){//movemento
+              moveLeft(NULL, player2, player1);
+         }
+     }
+     return; 
 }
 
 //Calcula se movimento é valido no eixo Y
@@ -181,6 +247,7 @@ bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
     return true;
 }
 
+//move personagem para direcoes que tiver em suas velocidades x e y
 void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
     if(player1->directionX == right){
         if(isMovementValidRight(player1, player2)){
@@ -206,7 +273,7 @@ void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2){
         }
         else if (player1->y > player2->y - player2->height / 2){ //Chegou no chão
             player1->y = GROUND_LEVEL - player1->height / 2;
-            player1->speedY = BASE_SPEEDY;// * match->speedMult;
+            player1->speedY = BASE_SPEEDY;
             player1->directionY = none;
             if(player1->directionX && !player1->stick->right && !player1->stick->left)
                 player1->directionX = none;
@@ -286,43 +353,77 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
     if(event.type == ALLEGRO_EVENT_KEY_DOWN){//Keybinds dos ataques
         //PLAYER1
         //Soco
-        if(event.keyboard.keycode == ALLEGRO_KEY_R && player1->state !=walkB && player1->state != walkF && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_R && 
+                player1->state !=walkB &&
+                player1->state != walkF &&
+                !al_get_timer_started(player1->cooldownAttack) &&
+                player1->stamina >= PUNCH_COST &&
+                !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, punch);
         //kick
-        if(event.keyboard.keycode == ALLEGRO_KEY_T && player1->state !=walkB && player1->state != walkF && !al_get_timer_started(player1->cooldownAttack) && player1->stamina >= PUNCH_COST && !al_get_timer_started(player1->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_T &&
+                player1->state !=walkB && player1->state != walkF &&
+                player1->state != crouch &&
+                player1->directionY == none &&
+                !al_get_timer_started(player1->cooldownAttackLow) &&
+                player1->stamina >= PUNCH_COST &&
+                !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, kick);
         //Projetil
-        if(event.keyboard.keycode == ALLEGRO_KEY_Y && !al_get_timer_started(player1->cooldownProj) && player1->state == stand && player1->stamina >= PROJ_COST && !al_get_timer_started(player1->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_Y &&
+                !al_get_timer_started(player1->cooldownProj) &&
+                player1->state == stand &&
+                player1->stamina >= PROJ_COST &&
+                !al_get_timer_started(player1->damageState))
             projectileWrapper(player1, player2);
         //PLAYER2
-        if(event.keyboard.keycode == ALLEGRO_KEY_J && player2->state !=walkB && player2->state != walkF && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_J &&
+                player2->state !=walkB &&
+                player2->state != walkF &&
+                !al_get_timer_started(player2->cooldownAttack) &&
+                player2->stamina >= PUNCH_COST &&
+                !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, punch);
 
-        if(event.keyboard.keycode == ALLEGRO_KEY_K && player2->state !=walkB && player2->state != walkF && !al_get_timer_started(player2->cooldownAttack) && player2->stamina >= PUNCH_COST && !al_get_timer_started(player2->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_K &&
+                player2->state !=walkB &&
+                player2->state != walkF &&
+                player2->state != crouch &&
+                player2->directionY == none &&
+                !al_get_timer_started(player2->cooldownAttackLow) &&
+                player2->stamina >= PUNCH_COST &&
+                !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, kick);
 
-        if(event.keyboard.keycode == ALLEGRO_KEY_L && !al_get_timer_started(player2->cooldownProj) && player2->state == stand && player2->stamina >= PROJ_COST && !al_get_timer_started(player2->damageState))
+        if(event.keyboard.keycode == ALLEGRO_KEY_L &&
+                !al_get_timer_started(player2->cooldownProj) &&
+                player2->state == stand &&
+                player2->stamina >= PROJ_COST &&
+                !al_get_timer_started(player2->damageState))
             projectileWrapper(player2, player1);
     }
     //TECLAS DE MOVIMENTACAO
     if(event.type == ALLEGRO_EVENT_KEY_DOWN || event.type == ALLEGRO_EVENT_KEY_UP){
         //PLAYER1
         if(event.keyboard.keycode == ALLEGRO_KEY_W)
-            moveUp(player1);
+            moveUp(&event, player1);
         if(event.keyboard.keycode == ALLEGRO_KEY_A)
-            moveLeft(player1, player2);
+            moveLeft(&event, player1, player2);
         if(event.keyboard.keycode == ALLEGRO_KEY_S)
-            moveDown(player1, player2);
+            moveDown(&event, player1, player2);
         if(event.keyboard.keycode == ALLEGRO_KEY_D)
-            moveRight(player1, player2);
+            moveRight(&event, player1, player2);
         //PLAYER2
-        if(event.keyboard.keycode == ALLEGRO_KEY_UP)
-            moveUp(player2);
-        if(event.keyboard.keycode == ALLEGRO_KEY_LEFT)
-            moveLeft(player2, player1);
-        if(event.keyboard.keycode == ALLEGRO_KEY_DOWN)
-            moveDown(player2, player1);
-        if(event.keyboard.keycode == ALLEGRO_KEY_RIGHT)
-            moveRight(player2, player1);
+        //se nao for controlado pelo computador
+        if(!player2->bot){
+            if(event.keyboard.keycode == ALLEGRO_KEY_UP)
+                moveUp(&event, player2);
+            if(event.keyboard.keycode == ALLEGRO_KEY_LEFT)
+                moveLeft(&event, player2, player1);
+            if(event.keyboard.keycode == ALLEGRO_KEY_DOWN)
+                moveDown(&event, player2, player1);
+            if(event.keyboard.keycode == ALLEGRO_KEY_RIGHT)
+                moveRight(&event, player2, player1);
+        }
     }
 }

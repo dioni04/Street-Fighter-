@@ -1,5 +1,4 @@
 #include "street.h"
-#include <allegro5/timer.h>
 
 //Libera projetil e relinka a lista
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
@@ -38,32 +37,38 @@ void destroyList(PROJECTILE** list){
 }
 
 void destroyMatch(MATCH* match){
-
+    if(!match)
+        return; 
     destroyPlayer(match->P1);
     destroyPlayer(match->P2);
-    /*
-    fclose(match->map.map);
-    fclose(match->map.soundMap);
-    */
-    //al_destroy_sample(match->music);
     for(int i = 0; i < match->map.size; i++)
         al_destroy_bitmap(match->map.map[i]);
-    // al_destroy_audio_stream(match->map.music);
     free(match);
+    match = NULL;
+    return; 
 }
 
 void destroyPlayer(PLAYER* player){
+    if(!player)
+        return; 
     free(player->stick);
     destroyList(&player->projs);
     al_destroy_timer(player->cooldownAttack);
+    al_destroy_timer(player->cooldownAttackLow);
     al_destroy_timer(player->cooldownProj);
     al_destroy_timer(player->attackDuration);
     al_destroy_timer(player->damageState);
+    al_destroy_timer(player->blockState);
+    al_destroy_timer(player->projDuration);
     al_destroy_timer(player->fighter.frameAttack);
     al_destroy_timer(player->fighter.frameMovement);
-    al_destroy_timer(player->projDuration);
     for(int i = 0; i < player->sizeSprites; i++)
         al_destroy_bitmap(player->spritesProjs[i]);
+    for(int i = 0; i < player->fighter.size; i++)
+        al_destroy_bitmap(player->fighter.sprite[i]);
+    free(player->fighter.sprite);
+    
     free(player);
+    player = NULL;
     return;
 }

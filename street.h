@@ -22,7 +22,8 @@ enum state{stand, walkF, walkB, crouch, jump, jumpF, jumpB, damage};
 enum direction{none, up, down, left, right};
 enum action{attack, hit, projectile};
 enum attackType{punch, kick};
-enum charID{monk, cleric, brawler};
+enum charID{monk, brawler, cleric};
+enum menu{singlePlayer, multiplayer, quit};
 enum pause{resume, mainMenu, exitGame};
 enum map{forest,dojo, bamboo};
 
@@ -33,10 +34,9 @@ enum map{forest,dojo, bamboo};
 //Numeros base de elementos do jogo
 #define MATCH_LENGTH 90
 #define BASE_HEALTH 150
-#define BASE_DMG_PUNCH 15
-#define BASE_DMG_KICK 25
-#define BASE_DMG_PROJ 30
-#define BASE_POISE 100
+#define BASE_DMG_PUNCH 10
+#define BASE_DMG_KICK 17
+#define BASE_DMG_PROJ 15
 #define BASE_STAMINA 75
 #define MAX_GAUGE 100
 
@@ -54,48 +54,40 @@ enum map{forest,dojo, bamboo};
 #define PROJ_SIZE (MAX_X*0.05)
 
 #define BLOCK_DURATION 0.15
-#define DAMAGE_DURATION 0.2
+#define DAMAGE_DURATION 0.1
 #define ATTACK_DURATION 0.375
 
-#define PROJ_COOLDOWN 1
+#define PROJ_COOLDOWN 2.0
 #define ATTACK_COOLDOWN 0.4
 
 #define STAMINA_REGEN 1
-#define PROJ_COST 40
+#define PROJ_COST 50
 #define PUNCH_COST 25
 #define KICK_COST 35
+#define BLOCK_COST 40
 
 #define ATTACK_GAUGE_GAIN 5
 #define DAMAGE_GAUGE_GAIN 3
 #define PROJECTILE_GAUGE_GAIN 4
 
-#define ATTACK_FRAME_DURATION 1/13.0
-#define MOV_FRAME_DURATION 1/3.0
+#define ATTACK_FRAME_DURATION 1/13.0 //frame de ataques
+#define MOV_FRAME_DURATION 1/3.0 //frame de andar
 #define GLOBAL_FRAME_TIME 1/20.0 //frame para animacoes de projeteis
 
 #define AT_LEFT(X1,X2) ((X1) < (X2) ? true : false)
 #define AT_RIGHT(X1,X2) ((X1) > (X2) ? true : false)
 
-//Vetores com os assets do jogo
-struct gameData{
-    FILE** models;
-    FILE** charSounds;
-    FILE** map;
-    FILE** mapSounds;
-};
-
 struct mapData{
     short size;
     ALLEGRO_BITMAP** map;
-    ALLEGRO_AUDIO_STREAM* music;
 };
 
 typedef struct attack{
     unsigned short id;
     unsigned short dmg;
     short direction;
-    bool hitFlag;
-    float x;//PONTA DO ATAQUE
+    bool hitFlag;//flag de validacao do ataque 
+    float x;//ponta do ataque
     float y;
     struct attack* next;
 }ATTACK;
@@ -120,6 +112,10 @@ typedef struct joystick{
     bool kick;
     bool special;
     bool shoot;
+    bool valUp;//flags de validade de input
+    bool valDown;
+    bool valLeft;
+    bool valRight;
 }JOYSTICK;
 
 struct character{
@@ -128,7 +124,6 @@ struct character{
     bool newFlag;
     short currentFrame;
     ALLEGRO_BITMAP** sprite;
-    ALLEGRO_SAMPLE* sounds;
     ALLEGRO_TIMER* frameMovement;
     ALLEGRO_TIMER* frameAttack;
 };
@@ -138,7 +133,6 @@ typedef struct player{
     JOYSTICK* stick;
     ATTACK* attacks;
     PROJECTILE* projs;
-    unsigned short state; //Stand, Crouch, Jump
     float x;
     float y;
     float height;
@@ -148,13 +142,15 @@ typedef struct player{
     unsigned short rounds;
     unsigned short directionX;
     unsigned short directionY;
+    unsigned short state; //Stand, Crouch, Jump
+    unsigned short gauge;
     short health;
-    short poise;
     short stamina;
     int sizeSprites;
-    unsigned short gauge;
+    bool bot;//true se computador controlar
     ALLEGRO_TIMER* cooldownProj;
     ALLEGRO_TIMER* cooldownAttack;
+    ALLEGRO_TIMER* cooldownAttackLow;
     ALLEGRO_TIMER* attackDuration;
     ALLEGRO_TIMER* projDuration;
     ALLEGRO_TIMER* damageState;
@@ -163,23 +159,13 @@ typedef struct player{
 }PLAYER;
 
 struct uiData{
-    ALLEGRO_BITMAP* staminaBar;
-    ALLEGRO_BITMAP* healthBar;
-    ALLEGRO_BITMAP* gaugeBar;
+    ALLEGRO_BITMAP* bar;
     ALLEGRO_BITMAP* round;
 };
 
 typedef struct match{
     //ALLEGRO_SAMPLE* music;
     unsigned short time;
-
-    float speedMult; //Multiplicadores para partida
-    float dmgMult;
-    float gravMult;
-    float poiseMult;
-    float healthMult;
-    float staminaMult;
-
     ALLEGRO_TIMER_EVENT* frameTime;
     struct uiData ui;
     struct mapData map;
@@ -187,19 +173,13 @@ typedef struct match{
     struct player* P2;
 }MATCH;
 
-//Strutura do jogo
-typedef struct game{
-    struct gameData data;
-    MATCH* match;
-}GAME;
-
 void mustInit(bool test, char* description);
 int countFilesFolder(char* folder_path);
 
 void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player);
 void loadMap(MATCH* match, short map);
-MATCH* createMatch(short map);
-PLAYER* createPlayer(MATCH* match,float x, float y, short id);
+MATCH* createMatch(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event, ALLEGRO_FONT* font, bool bot);
+PLAYER* createPlayer(MATCH* match,float x, float y, short id, bool bot);
 JOYSTICK* createJoystick();
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list);
 ATTACK* createAttack(PLAYER* player, short id, short direction);
@@ -218,16 +198,17 @@ void projectileWrapper(PLAYER* attacker, PLAYER* victim);
 bool inRangeX(float x, PLAYER* player2);
 bool inRangeY(float y, PLAYER* player2);
 
-void moveUp(PLAYER* player);
-void moveLeft(PLAYER* player, PLAYER* player2);
-void moveDown(PLAYER* player, PLAYER* player2);
-void moveRight(PLAYER* player, PLAYER* player2);
+void moveUp(ALLEGRO_EVENT* event, PLAYER* player);
+void moveLeft(ALLEGRO_EVENT* event, PLAYER* player, PLAYER* player2);
+void moveDown(ALLEGRO_EVENT* event, PLAYER* player, PLAYER* player2);
+void moveRight(ALLEGRO_EVENT* event, PLAYER* player, PLAYER* player2);
 
 bool isMovementValidUp(PLAYER* player1, PLAYER* player2);
 bool isMovementValidDown(PLAYER* player1, PLAYER* player2);
 bool isMovementValidLeft(PLAYER* player1, PLAYER* player2);
 bool isMovementValidRight(PLAYER* player1, PLAYER* player2);
 
+void singlePlayerMovement(PLAYER* player1, PLAYER* player2);
 void movePlayer(MATCH* match, PLAYER* player1, PLAYER* player2);
 void moveProjectile(PLAYER* player1, PLAYER* player2);
 
@@ -246,12 +227,16 @@ void cooldowns(ALLEGRO_EVENT event, PLAYER* player);
 void animationSelect(PLAYER* player);
 void animationSelectProjectile(PLAYER* player);
 
+short drawMainMenu(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event, ALLEGRO_FONT* font);
 void drawMap(MATCH* match);
 void drawCharacter(PLAYER* player1, PLAYER* player2);
 void drawProjectile(PLAYER* player);
 void drawShadow(PLAYER* player);
 short drawUI(ALLEGRO_DISPLAY* disp, ALLEGRO_FONT* font, ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT event ,MATCH* match,PLAYER* player1, PLAYER* player2);
 void drawRounds(PLAYER* player1, PLAYER* player2);
+short selectFighter(ALLEGRO_EVENT_QUEUE* queue , ALLEGRO_EVENT* event, ALLEGRO_FONT* font, char* fighter);
+short selectMap(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event, ALLEGRO_FONT* font);
 void nextFrame(PLAYER* player, ALLEGRO_EVENT event);
+void nextFrameProj(PLAYER* player);
 
 #endif
