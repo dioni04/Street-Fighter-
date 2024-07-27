@@ -1,56 +1,27 @@
 #include "street.h"
-#include <allegro5/events.h>
-#include <allegro5/timer.h>
-#include <stdbool.h>
 
 //Cria Partida
-MATCH* createMatch(short map){
+MATCH* createMatch(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event, ALLEGRO_FONT* font, bool bot){
     MATCH* match = NULL;
 
     match = (MATCH*)malloc(sizeof(MATCH));
     if(!match)
         return NULL;
 
-    //match->music = al_load_sample("last_v8.mod");
-    //must_init(match->music, "last_v8.mod");
-    //al_play_sample( match->music, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
-    //match->music =
-
-    /*
-    match->map.music = al_load_audio_stream("./last_v8.mod", 4, 2048);
-    al_set_audio_stream_playing(match->map.music, true);
-    al_set_audio_stream_gain(match->map.music, 1.0);
-    */
-    loadMap(match, map);
-    match->ui.staminaBar = al_load_bitmap("images/ui/EmptyBar.png");
-    if(!match->ui.staminaBar)
-        printf("Stamina Error");
-    match->ui.healthBar = al_load_bitmap("images/ui/EmptyBar.png");
-    if(!match->ui.healthBar)
-        printf("Health Error");
-    if(!match->map.map)
-        return NULL;
-    match->P1 = createPlayer(match ,MAX_X/4.0, GROUND_LEVEL - BASE_HEIGHT / 2, monk);
-    if(!match->P1)
-        return NULL;
-
-    match->P2 = createPlayer(match, MAX_X - MAX_X / 4.0, GROUND_LEVEL - BASE_HEIGHT / 2, brawler);
-    if(!match->P2)
-        return NULL;
-
-    match->dmgMult = 1.0;
-    match->gravMult = 1.0;
-    match->healthMult = 1.0;
-    match->poiseMult = 1.0;
-    match->speedMult = 1.0;
-    match->staminaMult = 1.0;
+    loadMap(match, selectMap(queue, event, font));
+    match->ui.bar = al_load_bitmap("images/ui/EmptyBar.png");
+    mustInit(match->ui.bar != NULL, "Bar Error");
+    mustInit(match->map.map != NULL, "Map Error");
+    match->P1 = createPlayer(match ,MAX_X/4.0, GROUND_LEVEL - BASE_HEIGHT / 2, selectFighter(queue, event, font, "FIGHTER 1"), false);
+    mustInit(match->P1 != NULL, "Player 1 Error");
+    match->P2 = createPlayer(match, MAX_X - MAX_X / 4.0, GROUND_LEVEL - BASE_HEIGHT / 2, selectFighter(queue, event, font, "FIGHTER 2"), bot);
+    mustInit(match->P2 != NULL, "Player 2 Error");
     match->time = MATCH_LENGTH;
-
     return match;
 }
 
 // Cria o personagem se for valido sua posicao
-PLAYER* createPlayer(MATCH* match, float x, float y, short id){
+PLAYER* createPlayer(MATCH* match, float x, float y, short id, bool bot){
     PLAYER* player = NULL;
 
     if(x > MAX_X || y > MAX_Y || x + BASE_LENGTH / 2 > MAX_X || x - BASE_LENGTH / 2 < 0 || y + BASE_HEIGHT / 2 > MAX_Y || y - BASE_HEIGHT / 2 < 0)
@@ -60,16 +31,17 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     if(!player)
         return NULL;
 
-    //FALTA SPRITES E SONS
     player->x = x;
     player->y = y;
     player->height = BASE_HEIGHT;
     player->length = BASE_LENGTH;
-    player->health = BASE_HEALTH;// * match->healthMult;
-    player->speedX = BASE_SPEEDX;// * match->speedMult;
-    player->speedY = BASE_SPEEDY;// * match->speedMult;
-    player->poise = BASE_POISE;// * match->poiseMult;
-    player->stamina = BASE_STAMINA;// * match->staminaMult;
+    player->health = BASE_HEALTH;
+    if(!bot)
+        player->speedX = BASE_SPEEDX;
+    else 
+        player->speedX = BASE_SPEEDX * 0.925;//bot é um pouco mais lento para evitar problema de colisão
+    player->speedY = BASE_SPEEDY;
+    player->stamina = BASE_STAMINA;
     player->state = stand;
     player->directionX = none;
     player->directionY = none;
@@ -80,18 +52,26 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
     player->projs = NULL;
     player->attacks = NULL;
     player->fighter.newFlag = true;
-    player->fighter.id = id;//temp
+    player->fighter.id = id;
     player->fighter.size = 0;
     player->fighter.sprite = NULL;
     player->spritesProjs = NULL;
-
+    player->bot = bot;
     animationSelectProjectile(player);
 
     //TIMERS COOLDOWN
     player->cooldownProj = al_create_timer(PROJ_COOLDOWN);
     mustInit(player->cooldownProj != NULL, "Proj Cooldown");
-    player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
+    if(!bot)
+        player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN);
+    else
+        player->cooldownAttack = al_create_timer(ATTACK_COOLDOWN * 3.25);
     mustInit(player->cooldownAttack != NULL, "Attack Cooldown");
+    if(!bot)
+        player->cooldownAttackLow = al_create_timer(ATTACK_COOLDOWN);
+    else
+        player->cooldownAttackLow = al_create_timer(ATTACK_COOLDOWN * 4);
+    mustInit(player->cooldownAttackLow != NULL, "Cooldown Attack Low");
     player->attackDuration = al_create_timer(ATTACK_DURATION);
     mustInit(player->attackDuration != NULL, "Attack Duration");
     player->damageState = al_create_timer(DAMAGE_DURATION);
@@ -117,6 +97,7 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id){
 void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player){
     al_register_event_source(queue, al_get_timer_event_source(player->cooldownProj));
     al_register_event_source(queue, al_get_timer_event_source(player->cooldownAttack));
+    al_register_event_source(queue, al_get_timer_event_source(player->cooldownAttackLow));
     al_register_event_source(queue, al_get_timer_event_source(player->attackDuration));
     al_register_event_source(queue, al_get_timer_event_source(player->damageState));
     al_register_event_source(queue, al_get_timer_event_source(player->fighter.frameMovement));
@@ -126,6 +107,7 @@ void registerTimers(ALLEGRO_EVENT_QUEUE* queue, PLAYER* player){
     return;
 }
 
+//conta arquivos e cria vetor de bitmaps
 ALLEGRO_BITMAP** createSpritesProjs(PLAYER* player, char* folder){
     ALLEGRO_BITMAP** sprites = NULL;
     player->sizeSprites = countFilesFolder(folder);
@@ -136,6 +118,7 @@ ALLEGRO_BITMAP** createSpritesProjs(PLAYER* player, char* folder){
     return sprites;
 }
 
+//conta arquivos e cria vetor de bitmaps
 ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder){
     ALLEGRO_BITMAP** sprites = NULL;
     player->fighter.size = countFilesFolder(folder);
@@ -148,6 +131,7 @@ ALLEGRO_BITMAP** createSprites(PLAYER* player, char* folder){
     return sprites;
 }
 
+//cria joystick com flags de validacao
 JOYSTICK* createJoystick(){
     JOYSTICK* stick = NULL;
 
@@ -162,18 +146,20 @@ JOYSTICK* createJoystick(){
     stick->punch = false;
     stick->special = false;
     stick->shoot = false;
+    stick->valUp = false;
+    stick->valDown = false;
+    stick->valLeft = false;
+    stick->valRight = false;
 
     return stick;
 }
 
-
-
+//cria ataque
 ATTACK* createAttack(PLAYER* player, short id, short direction){
     ATTACK* attack = NULL;
 
     attack = (ATTACK*)malloc(sizeof(ATTACK));
-    if(!attack)
-        return NULL;
+    mustInit(attack != NULL, "Attack Error");
     attack->direction = direction;
     if(id == punch){//soco
         attack->dmg = BASE_DMG_PUNCH;
@@ -189,16 +175,15 @@ ATTACK* createAttack(PLAYER* player, short id, short direction){
     else
         attack->x = player->x + player->length * 1.25;
     attack->hitFlag = false;
-    al_start_timer(player->cooldownAttack);
     return attack;
 }
 
+//cria projetil
 PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     PROJECTILE* proj = NULL;
 
     proj = (PROJECTILE*)malloc(sizeof(PROJECTILE));
-    if(!proj)
-        return NULL;
+    mustInit(proj != NULL, "Proj Error");
     proj->direction = direction;
     proj->dmg = BASE_DMG_PROJ;
     proj->speed = PROJECTILE_SPEED;
@@ -213,6 +198,7 @@ PROJECTILE* createProjectile(PLAYER* player, short direction, PROJECTILE* list){
     return proj;
 }
 
+//carrega bitmaps do cenario
 void loadMap(MATCH* match, short map){
     char path[512];
     if(map == forest)
@@ -235,21 +221,39 @@ void loadMap(MATCH* match, short map){
     return ;
 }
 
+/*Wrapper para ataques
+ * cria flags
+ * cooldowns e timers
+ * stamina
+ */
 void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
     if(AT_LEFT(attacker->x, victim->x))
         attacker->attacks = createAttack(attacker, id,right);
     else
         attacker->attacks = createAttack(attacker, id,left);
-    al_start_timer(attacker->attackDuration);
-    al_start_timer(attacker->cooldownAttack);
-    if(id == punch)
+    if(!al_get_timer_started(attacker->attackDuration))
+        al_start_timer(attacker->attackDuration);
+    else{//animation cancel
+        al_stop_timer(attacker->attackDuration);
+        al_start_timer(attacker->attackDuration);
+    }
+    if(id == punch){
         attacker->stamina -= PUNCH_COST;
-    else
+        al_start_timer(attacker->cooldownAttack);
+    }
+    else{
         attacker->stamina -= KICK_COST;
+        al_start_timer(attacker->cooldownAttackLow);
+    } 
     attacker->fighter.newFlag = true;
     return;
 }
 
+/*Wrapper para projeteis
+ * cria flags
+ * cooldowns e timers
+ * stamina
+ */
 void projectileWrapper(PLAYER* attacker, PLAYER* victim){
     if(AT_LEFT(attacker->x, victim->x))
         attacker->projs = createProjectile(attacker, right, attacker->projs);

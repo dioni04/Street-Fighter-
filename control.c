@@ -1,7 +1,4 @@
 #include "street.h"
-#include <allegro5/timer.h>
-#include <stdbool.h>
-#include <stdio.h>
 
 void mustInit(bool test, char* description){
     if(!test){
@@ -11,6 +8,7 @@ void mustInit(bool test, char* description){
     return;
 }
 
+//conta a quantidade de arquivos na pasta para criar o vetor de bitmaps para animacoes
 int countFilesFolder(char* path){
     int counter = 0;
     struct dirent *dir;
@@ -34,6 +32,7 @@ void pressSpace(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event){
     return;
 }
 
+//reseta player em novo round
 void resetPlayer(PLAYER* player){
     player->health = BASE_HEALTH;
     player->stamina = BASE_STAMINA;
@@ -41,6 +40,14 @@ void resetPlayer(PLAYER* player){
     player->directionX = none;
     player->directionY = none;
     player->fighter.newFlag = true;
+    player->stick->up = false;
+    player->stick->down = false;
+    player->stick->left = false;
+    player->stick->right = false;
+    player->stick->valUp = false;
+    player->stick->valDown = false;
+    player->stick->valLeft = false;
+    player->stick->valRight = false;
     destroyAttack(player);
     al_stop_timer(player->cooldownAttack);
     al_stop_timer(player->cooldownProj);
@@ -49,6 +56,7 @@ void resetPlayer(PLAYER* player){
     return;
 }
 
+//reseta round
 void roundReset(MATCH* match){
     match->time = MATCH_LENGTH;
     resetPlayer(match->P1);
@@ -88,25 +96,33 @@ void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* attacker, PLAYER* v
     return;
 }
 
+//Check se ataque acertou
 void checkHitAttack(PLAYER* attacker, PLAYER* victim){
     //Se nao houver ataque ou ja ter acertado retorna
     if(!attacker->attacks || attacker->attacks->hitFlag){
         return;
     }
-    if(attacker->attacks->id == punch && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && victim->state != crouch){//hit
-        if(victim->state != walkB)
+    //se for soco e estiver no range e vitima nao estar agachada
+    if(attacker->attacks->id == punch && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim) && ((attacker->state == crouch && victim->state == crouch) || victim->state != crouch)){
+        //hit
+        if(victim->state != walkB || victim->stamina < BLOCK_COST)
             hitApply(NULL, attacker->attacks, attacker, victim);
-        else{//block
+        //block
+        else{
             al_start_timer(victim->blockState);
             attacker->attacks->hitFlag = true;
+            victim->stamina -= BLOCK_COST;
         }
     }
+    //se for chute e no range
     else if(attacker->attacks->id == kick && inRangeX(attacker->attacks->x, victim) && inRangeY(attacker->attacks->y, victim)){
-        if(victim->state != crouch)
+        //se vitima nao estiver agachada ou nao ter stamina para bloquear
+        if(victim->state != crouch || victim->stamina < BLOCK_COST)
             hitApply(NULL, attacker->attacks, attacker, victim);
         else{//block
             al_start_timer(victim->blockState);
             attacker->attacks->hitFlag = true;
+            victim->stamina -= BLOCK_COST;
         }
     }
     return;
@@ -114,12 +130,12 @@ void checkHitAttack(PLAYER* attacker, PLAYER* victim){
 
 //Cooldowns do personagem
 void cooldowns(ALLEGRO_EVENT event, PLAYER* player){
-    if(event.timer.source == player->cooldownAttack){
+    if(event.timer.source == player->cooldownAttack)
         al_stop_timer(player->cooldownAttack);
-    }
-    if(event.timer.source == player->cooldownProj){
+    if(event.timer.source == player->cooldownAttackLow)
+        al_stop_timer(player->cooldownAttackLow);
+    if(event.timer.source == player->cooldownProj)
         al_stop_timer(player->cooldownProj);
-    }
     if(event.timer.source == player->attackDuration){
         al_stop_timer(player->attackDuration);
         destroyAttack(player);
@@ -172,7 +188,6 @@ void animationSelectProjectile(PLAYER* player){
     for(int i = 0; i < player->sizeSprites; i++){
         char c = i + 1 + '0'; //numero de i+1 em char
         *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
-        printf("%s\n", path);
         player->spritesProjs[i] = al_load_bitmap(path);
     }
     return;
@@ -259,8 +274,6 @@ void animationSelect(PLAYER* player){
     for(i = 0; i < player->fighter.size; i++){
         char c = i + 1 + '0'; //numero de i+1 em char
         *ch = c;//carrega sprites nomeados na ordem ASCII a partir de 1
-        // printf("%s\n", path);
-        printf("%s\n", path);
         player->fighter.sprite[i] = al_load_bitmap(path);
     }
     return;
