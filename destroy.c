@@ -1,5 +1,9 @@
 #include "street.h"
 
+/*
+ * ARQUIVO DE FREEs DE STRUCTS E TIMERS
+ */
+
 //Libera projetil e relinka a lista
 void destroyProjectile(PROJECTILE** list, PROJECTILE* p){
     PROJECTILE* aux = *list;

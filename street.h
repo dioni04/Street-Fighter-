@@ -32,6 +32,7 @@ enum map{forest,dojo, bamboo};
 #define FPS 30.0
 
 //Numeros base de elementos do jogo
+
 #define MATCH_LENGTH 90
 #define BASE_HEALTH 150
 #define BASE_DMG_PUNCH 10

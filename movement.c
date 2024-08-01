@@ -1,5 +1,12 @@
 #include "street.h"
 
+/*
+ * ARQUIVO COM FUNCOES DE MOVIMENTACAO DE PERSONAGENS
+ * CHECKS DE COLISAO
+ * KEYBINDS
+ * SINGLE PLAYER
+ */
+
 void moveUp(ALLEGRO_EVENT* event, PLAYER* player){
     if(!player->stick->valUp && event && event->type == ALLEGRO_EVENT_KEY_UP)//evita bug se comecar com tecla segurada
         return;

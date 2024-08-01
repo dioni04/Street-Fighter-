@@ -115,7 +115,7 @@ int main(){
                 }
                 if(redraw && al_is_event_queue_empty(queue)){ //Novo Frame
                     redraw = false;
-                    //CHECKS DE MOVEMENTO E ATAQUES
+                    //Checks de movimento e ataques
                     if(singlePlay)
                        singlePlayerMovement(player1, player2);
 

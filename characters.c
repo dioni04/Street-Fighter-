@@ -1,5 +1,11 @@
 #include "street.h"
 
+/*
+ * ARQUIVO DE FUNÇOES DE CRIACAO DE STRUCTS E TIMERS
+ * ATAQUES
+ * PROJETEIS
+ */
+
 //Cria Partida
 MATCH* createMatch(ALLEGRO_EVENT_QUEUE* queue, ALLEGRO_EVENT* event, ALLEGRO_FONT* font, bool bot){
     MATCH* match = NULL;

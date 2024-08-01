@@ -1,5 +1,13 @@
 #include "street.h"
 
+/*
+ * ARQUIVO COM FUNÇOES DE CONTROLE DA LÓGICA DO JOGO
+ * COOLDOWNS
+ * RESETS
+ * CHECKS DE HITS
+ * SELECOES DE SPRITES
+ */
+
 void mustInit(bool test, char* description){
     if(!test){
         printf("%s\n", description);

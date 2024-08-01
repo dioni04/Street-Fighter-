@@ -1,5 +1,10 @@
 #include "street.h"
 
+/*
+ * ARQUIVO DE FUNCOES DE DRAW NA TELA DO JOGO
+ * POSSUI TAMBÉM MENUS E SEUS CONTROLES
+ */
+
 void drawMap(MATCH* match){
     //MAPA
     for(int i = 0; i < match->map.size; i++){
