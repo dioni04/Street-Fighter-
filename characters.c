@@ -70,7 +70,7 @@ PLAYER* createPlayer(MATCH* match, float x, float y, short id, bool bot){
     if(!bot)
         player->cooldownAttackLow = al_create_timer(ATTACK_COOLDOWN);
     else
-        player->cooldownAttackLow = al_create_timer(ATTACK_COOLDOWN * 4);
+        player->cooldownAttackLow = al_create_timer(ATTACK_COOLDOWN * 4.25);
     mustInit(player->cooldownAttackLow != NULL, "Cooldown Attack Low");
     player->attackDuration = al_create_timer(ATTACK_DURATION);
     mustInit(player->attackDuration != NULL, "Attack Duration");
@@ -227,6 +227,12 @@ void loadMap(MATCH* match, short map){
  * stamina
  */
 void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
+    //sem stamina
+    if(id == punch && attacker->stamina < PUNCH_COST)
+        return;
+    else if(id == kick && attacker->stamina < KICK_COST)
+        return;
+
     if(AT_LEFT(attacker->x, victim->x))
         attacker->attacks = createAttack(attacker, id,right);
     else
@@ -255,6 +261,8 @@ void attackWrapper(PLAYER* attacker, PLAYER* victim, short id){
  * stamina
  */
 void projectileWrapper(PLAYER* attacker, PLAYER* victim){
+    if(attacker->stamina < PROJ_COST)
+        return;
     if(AT_LEFT(attacker->x, victim->x))
         attacker->projs = createProjectile(attacker, right, attacker->projs);
     else

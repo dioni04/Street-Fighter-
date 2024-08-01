@@ -154,49 +154,49 @@ void moveRight(ALLEGRO_EVENT* event, PLAYER* player1, PLAYER* player2){
  */
 void singlePlayerMovement(PLAYER* player1, PLAYER* player2){
   
-     if(al_get_timer_started(player2->attackDuration) || al_get_timer_started(player2->projDuration) || al_get_timer_started(player2->damageState))
-         return ;   
-     if(AT_LEFT(player2->x, player1->x)){
-         if(player2->directionX == left)//troca lado
-             moveLeft(NULL, player2,player1);
-         if(inRangeX(player2->x + player2->length * 1.25, player1)){
-             if(player2->directionX == right)
-                  moveRight(NULL, player2, player1);
-             if(!al_get_timer_started(player2->cooldownAttack))//soco
-                  attackWrapper(player2, player1, punch);
-             else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
-                  attackWrapper(player2, player1, kick);
-         }
-         else if(!al_get_timer_started(player2->cooldownProj)){//projetil
-              if(player2->directionX == right)
-                  moveRight(NULL, player2, player1);
-              projectileWrapper(player2, player1);
-         }
-         else if(player2->directionX != right){//movemento
-              moveRight(NULL, player2, player1);
-         }
+    if(al_get_timer_started(player2->attackDuration) || al_get_timer_started(player2->projDuration) || al_get_timer_started(player2->damageState))
+        return ;
+    if(AT_LEFT(player2->x, player1->x)){
+        if(player2->directionX == left)//troca lado
+            moveLeft(NULL, player2,player1);
+        if(inRangeX(player2->x + player2->length * 1.25, player1)){
+            if(player2->directionX == right)
+                moveRight(NULL, player2, player1);
+            if(!al_get_timer_started(player2->cooldownAttack))//soco
+                attackWrapper(player2, player1, punch);
+            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                attackWrapper(player2, player1, kick);
+        }
+        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+            if(player2->directionX == right)
+                moveRight(NULL, player2, player1);
+            projectileWrapper(player2, player1);
+        }
+        else if(player2->directionX != right){//movemento
+            moveRight(NULL, player2, player1);
+        }
      }
-     else{
-         if(player2->directionX == right)//troca lado
-             moveRight(NULL, player2,player1);
-         if(inRangeX(player2->x - player2->length * 1.25, player1)){
-             if(player2->directionX == left)
+    else{
+        if(player2->directionX == right)//troca lado
+            moveRight(NULL, player2,player1);
+        if(inRangeX(player2->x - player2->length * 1.25, player1)){
+            if(player2->directionX == left)
+                moveLeft(NULL, player2, player1);
+            if(!al_get_timer_started(player2->cooldownAttack))//soco
+                attackWrapper(player2, player1, punch);
+            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                attackWrapper(player2, player1, kick);
+        }
+        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+            if(player2->directionX == left)
                   moveLeft(NULL, player2, player1);
-             if(!al_get_timer_started(player2->cooldownAttack))//soco
-                  attackWrapper(player2, player1, punch);
-             else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
-                  attackWrapper(player2, player1, kick);
-         }
-         else if(!al_get_timer_started(player2->cooldownProj)){//projetil
-              if(player2->directionX == left)
-                  moveLeft(NULL, player2, player1);
-              projectileWrapper(player2, player1);
-         }
-         else if(player2->directionX != left){//movemento
-              moveLeft(NULL, player2, player1);
-         }
-     }
-     return; 
+            projectileWrapper(player2, player1);
+        }
+        else if(player2->directionX != left){//movemento
+            moveLeft(NULL, player2, player1);
+        }
+    }
+    return;
 }
 
 //Calcula se movimento é valido no eixo Y
@@ -357,7 +357,6 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
                 player1->state !=walkB &&
                 player1->state != walkF &&
                 !al_get_timer_started(player1->cooldownAttack) &&
-                player1->stamina >= PUNCH_COST &&
                 !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, punch);
         //kick
@@ -366,14 +365,12 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
                 player1->state != crouch &&
                 player1->directionY == none &&
                 !al_get_timer_started(player1->cooldownAttackLow) &&
-                player1->stamina >= PUNCH_COST &&
                 !al_get_timer_started(player1->damageState))
             attackWrapper(player1, player2, kick);
         //Projetil
         if(event.keyboard.keycode == ALLEGRO_KEY_Y &&
                 !al_get_timer_started(player1->cooldownProj) &&
                 player1->state == stand &&
-                player1->stamina >= PROJ_COST &&
                 !al_get_timer_started(player1->damageState))
             projectileWrapper(player1, player2);
         //PLAYER2
@@ -381,7 +378,6 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
                 player2->state !=walkB &&
                 player2->state != walkF &&
                 !al_get_timer_started(player2->cooldownAttack) &&
-                player2->stamina >= PUNCH_COST &&
                 !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, punch);
 
@@ -391,14 +387,12 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
                 player2->state != crouch &&
                 player2->directionY == none &&
                 !al_get_timer_started(player2->cooldownAttackLow) &&
-                player2->stamina >= PUNCH_COST &&
                 !al_get_timer_started(player2->damageState))
             attackWrapper(player2, player1, kick);
 
         if(event.keyboard.keycode == ALLEGRO_KEY_L &&
                 !al_get_timer_started(player2->cooldownProj) &&
                 player2->state == stand &&
-                player2->stamina >= PROJ_COST &&
                 !al_get_timer_started(player2->damageState))
             projectileWrapper(player2, player1);
     }

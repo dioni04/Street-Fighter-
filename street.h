@@ -37,7 +37,7 @@ enum map{forest,dojo, bamboo};
 #define BASE_DMG_PUNCH 10
 #define BASE_DMG_KICK 17
 #define BASE_DMG_PROJ 15
-#define BASE_STAMINA 75
+#define BASE_STAMINA 120
 #define MAX_GAUGE 100
 
 #define BASE_SPEEDX (MAX_X / 150.0)
@@ -54,16 +54,16 @@ enum map{forest,dojo, bamboo};
 #define PROJ_SIZE (MAX_X*0.05)
 
 #define BLOCK_DURATION 0.15
-#define DAMAGE_DURATION 0.1
+#define DAMAGE_DURATION 0.075
 #define ATTACK_DURATION 0.375
 
-#define PROJ_COOLDOWN 2.0
+#define PROJ_COOLDOWN 1.5
 #define ATTACK_COOLDOWN 0.4
 
 #define STAMINA_REGEN 1
 #define PROJ_COST 50
-#define PUNCH_COST 25
-#define KICK_COST 35
+#define PUNCH_COST 35
+#define KICK_COST 45
 #define BLOCK_COST 40
 
 #define ATTACK_GAUGE_GAIN 5
