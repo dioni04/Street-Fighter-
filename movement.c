@@ -2,7 +2,6 @@
 
 /*
  * ARQUIVO COM FUNCOES DE MOVIMENTACAO DE PERSONAGENS
- * CHECKS DE COLISAO
  * KEYBINDS
  * SINGLE PLAYER
  */
@@ -153,105 +152,6 @@ void moveRight(ALLEGRO_EVENT* event, PLAYER* player1, PLAYER* player2){
     }
 
     return;
-}
-
-/*movimento do computador se estiver em single player
- * Anda e ataque quando no range e/ou fora de cooldown
- * Se estiver em animação não faz nada
- */
-void singlePlayerMovement(PLAYER* player1, PLAYER* player2){
-  
-    if(al_get_timer_started(player2->attackDuration) || al_get_timer_started(player2->projDuration) || al_get_timer_started(player2->damageState))
-        return ;
-    if(AT_LEFT(player2->x, player1->x)){
-        if(player2->directionX == left)//troca lado
-            moveLeft(NULL, player2,player1);
-        if(inRangeX(player2->x + player2->length * 1.25, player1)){
-            if(player2->directionX == right)
-                moveRight(NULL, player2, player1);
-            if(!al_get_timer_started(player2->cooldownAttack))//soco
-                attackWrapper(player2, player1, punch);
-            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
-                attackWrapper(player2, player1, kick);
-        }
-        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
-            if(player2->directionX == right)
-                moveRight(NULL, player2, player1);
-            projectileWrapper(player2, player1);
-        }
-        else if(player2->directionX != right){//movemento
-            moveRight(NULL, player2, player1);
-        }
-     }
-    else{
-        if(player2->directionX == right)//troca lado
-            moveRight(NULL, player2,player1);
-        if(inRangeX(player2->x - player2->length * 1.25, player1)){
-            if(player2->directionX == left)
-                moveLeft(NULL, player2, player1);
-            if(!al_get_timer_started(player2->cooldownAttack))//soco
-                attackWrapper(player2, player1, punch);
-            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
-                attackWrapper(player2, player1, kick);
-        }
-        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
-            if(player2->directionX == left)
-                  moveLeft(NULL, player2, player1);
-            projectileWrapper(player2, player1);
-        }
-        else if(player2->directionX != left){//movemento
-            moveLeft(NULL, player2, player1);
-        }
-    }
-    return;
-}
-
-//Calcula se movimento é valido no eixo Y
-bool isMovementValidUp(PLAYER* player1, PLAYER* player2){
-    //Se tiver movimento para cima
-    if(player1->y - (player1->height / 2) - player1->speedY < 0)
-        return false;
-    //Se estiver em baixo do outro player
-    if(player1->y > player2->y && inRangeX(player1->x, player2))
-        if(player1->y - (player1->height / 2) - player1->speedY < (player2->y + player2->height / 2))
-            return false;
-    return true;
-}
-
-//Calcula se movimento é valido no eixo Y
-bool isMovementValidDown(PLAYER* player1, PLAYER* player2){
-
-    //esse player1->height sem o /2 eh para manter consistente o check sobre o chao
-    if((player1->y + (player1->height * 0.75) + player1->speedY) > GROUND_LEVEL)
-        return false;
-    //Se tiver encima do outro player
-    if(player1->y < player2->y && inRangeX(player1->x, player2))
-        if(player1->y + (player1->height / 2) + player1->speedY > (player2->y - player2->height / 2))
-            return false;
-    return true;
-}
-
-//Testa se movemento nao quebra nenhum limite
-bool isMovementValidLeft(PLAYER* player1, PLAYER* player2){
-    if(player1->x - (player1->length / 2) - player1->speedX < 0)
-        return false;
-    //Se estiver na direita e no intervalo da altura do outro player
-    if(player1->x > player2->x && inRangeY(player1->y, player2)){
-        if(player1->x - (player1->length / 2) - player1->speedX < player2->x + player2->length / 2)
-            return false;
-    }
-    return true;
-}
-
-bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
-    if(player1->x + (player1->length / 2) + player1->speedX > MAX_X)
-        return false;
-    //Se outro player estar na esquerda e no intervalo da altura do outro player
-    if(player1->x < player2->x && inRangeY(player1->y, player2)){
-        if(player1->x + (player1->length / 2) + player1->speedX > player2->x - player2->length / 2)
-            return false;
-    }
-    return true;
 }
 
 //move personagem para direcoes que tiver em suas velocidades x e y
@@ -427,4 +327,55 @@ void keybinds(ALLEGRO_EVENT event, PLAYER* player1, PLAYER* player2){
                 moveRight(&event, player2, player1);
         }
     }
+}
+
+/*movimento do computador se estiver em single player
+ * Anda e ataque quando no range e/ou fora de cooldown
+ * Se estiver em animação não faz nada
+ */
+void singlePlayerMovement(PLAYER* player1, PLAYER* player2){
+
+    if(al_get_timer_started(player2->attackDuration) || al_get_timer_started(player2->projDuration) || al_get_timer_started(player2->damageState))
+        return ;
+    if(AT_LEFT(player2->x, player1->x)){
+        if(player2->directionX == left)//troca lado
+            moveLeft(NULL, player2,player1);
+        if(inRangeX(player2->x + player2->length * 1.25, player1)){
+            if(player2->directionX == right)
+                moveRight(NULL, player2, player1);
+            if(!al_get_timer_started(player2->cooldownAttack))//soco
+                attackWrapper(player2, player1, punch);
+            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                attackWrapper(player2, player1, kick);
+        }
+        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+            if(player2->directionX == right)
+                moveRight(NULL, player2, player1);
+            projectileWrapper(player2, player1);
+        }
+        else if(player2->directionX != right){//movemento
+            moveRight(NULL, player2, player1);
+        }
+     }
+    else{
+        if(player2->directionX == right)//troca lado
+            moveRight(NULL, player2,player1);
+        if(inRangeX(player2->x - player2->length * 1.25, player1)){
+            if(player2->directionX == left)
+                moveLeft(NULL, player2, player1);
+            if(!al_get_timer_started(player2->cooldownAttack))//soco
+                attackWrapper(player2, player1, punch);
+            else if(!al_get_timer_started(player2->cooldownAttackLow) && !al_get_timer_started(player2->attackDuration))//chute
+                attackWrapper(player2, player1, kick);
+        }
+        else if(!al_get_timer_started(player2->cooldownProj)){//projetil
+            if(player2->directionX == left)
+                  moveLeft(NULL, player2, player1);
+            projectileWrapper(player2, player1);
+        }
+        else if(player2->directionX != left){//movemento
+            moveLeft(NULL, player2, player1);
+        }
+    }
+    return;
 }

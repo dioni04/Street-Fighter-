@@ -4,8 +4,9 @@
  * ARQUIVO COM FUNÇOES DE CONTROLE DA LÓGICA DO JOGO
  * COOLDOWNS
  * RESETS
- * CHECKS DE HITS
+ * CHECKS DE HITS E COLISOES
  * SELECOES DE SPRITES
+ * REGEN DE STAMINA
  */
 
 void mustInit(bool test, char* description){
@@ -102,6 +103,54 @@ void hitApply(PROJECTILE* projectile, ATTACK* attack,PLAYER* attacker, PLAYER* v
     }
     al_start_timer(victim->damageState);
     return;
+}
+
+//Calcula se movimento é valido no eixo Y
+bool isMovementValidUp(PLAYER* player1, PLAYER* player2){
+    //Se tiver movimento para cima
+    if(player1->y - (player1->height / 2) - player1->speedY < 0)
+        return false;
+    //Se estiver em baixo do outro player
+    if(player1->y > player2->y && inRangeX(player1->x, player2))
+        if(player1->y - (player1->height / 2) - player1->speedY < (player2->y + player2->height / 2))
+            return false;
+    return true;
+}
+
+//Calcula se movimento é valido no eixo Y
+bool isMovementValidDown(PLAYER* player1, PLAYER* player2){
+
+    //esse player1->height sem o /2 eh para manter consistente o check sobre o chao
+    if((player1->y + (player1->height * 0.75) + player1->speedY) > GROUND_LEVEL)
+        return false;
+    //Se tiver encima do outro player
+    if(player1->y < player2->y && inRangeX(player1->x, player2))
+        if(player1->y + (player1->height / 2) + player1->speedY > (player2->y - player2->height / 2))
+            return false;
+    return true;
+}
+
+//Testa se movemento nao quebra nenhum limite
+bool isMovementValidLeft(PLAYER* player1, PLAYER* player2){
+    if(player1->x - (player1->length / 2) - player1->speedX < 0)
+        return false;
+    //Se estiver na direita e no intervalo da altura do outro player
+    if(player1->x > player2->x && inRangeY(player1->y, player2)){
+        if(player1->x - (player1->length / 2) - player1->speedX < player2->x + player2->length / 2)
+            return false;
+    }
+    return true;
+}
+
+bool isMovementValidRight(PLAYER* player1, PLAYER* player2){
+    if(player1->x + (player1->length / 2) + player1->speedX > MAX_X)
+        return false;
+    //Se outro player estar na esquerda e no intervalo da altura do outro player
+    if(player1->x < player2->x && inRangeY(player1->y, player2)){
+        if(player1->x + (player1->length / 2) + player1->speedX > player2->x - player2->length / 2)
+            return false;
+    }
+    return true;
 }
 
 //Check se ataque acertou
