@@ -27,5 +27,10 @@ Player 1
   -  R: Punch
   -  T: Kick
   -  Y: Projectile
+Player 2
+  -  D-pads: Movement
+  -  J: Punch
+  -  K: Kick
+  -  L: Projectile
 ##  Credits
 [ansimuz](https://opengameart.org/users/ansimuz) pixel artist for the amazing art at OpenGameArt.org
