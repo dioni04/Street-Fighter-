@@ -32,5 +32,8 @@ Player 2
   -  J: Punch
   -  K: Kick
   -  L: Projectile
+##  Image
+![screenshot1](https://github.com/user-attachments/assets/be2164c0-6699-45d2-b4e1-1e2e4a7bbc71)
 ##  Credits
 [ansimuz](https://opengameart.org/users/ansimuz) pixel artist for the amazing art at OpenGameArt.org
+
