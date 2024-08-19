@@ -27,6 +27,7 @@ Player 1
   -  R: Punch
   -  T: Kick
   -  Y: Projectile
+
 Player 2
   -  D-pads: Movement
   -  J: Punch
